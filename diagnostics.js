@@ -1,4 +1,4 @@
-import { normalizeConversation, parseJson } from "./conversation-model.js";
+import { normalizeItem, parseJson } from "./conversation-model.js";
 
 const SECRET_PATTERNS = [
   { code: "openai-key", label: "Possible OpenAI API key", regex: /\bsk-[A-Za-z0-9_-]{20,}\b/g },
@@ -88,33 +88,25 @@ function inspectRawSecrets(source, output) {
   }
 }
 
-export function runDiagnostics(source, mode = "payload") {
+export function runDiagnostics(source, mode = "prompt") {
   const output = [];
   const raw = String(source || "");
   if (!raw.trim()) return output;
   inspectRawSecrets(raw, output);
 
-  if (["payload", "trace", "schema", "rag"].includes(mode)) {
+  if (mode === "trace") {
     const parsed = parseJson(raw);
     if (!parsed.ok) {
       output.unshift(diagnostic("error", "invalid-json", `Invalid JSON: ${parsed.error}`));
       return output;
     }
     inspectSensitiveKeys(parsed.value, "$", output);
-    if (["payload", "trace"].includes(mode)) {
-      const conversation = normalizeConversation(parsed.value);
-      if (!conversation.items.length && mode === "payload") output.push(diagnostic("warning", "unknown-root", "No supported message collection was found."));
-      inspectEmptyMessages(conversation.items, output);
-      inspectToolIntegrity(conversation.items, output);
-    }
-    if (mode === "rag") {
-      const chunks = Array.isArray(parsed.value) ? parsed.value : parsed.value.chunks || parsed.value.results || parsed.value.documents || [];
-      chunks.forEach((chunk, index) => {
-        if (chunk?.score !== undefined && (typeof chunk.score !== "number" || !Number.isFinite(chunk.score))) output.push(diagnostic("warning", "rag-score", "RAG score is not a finite number.", `$[${index}].score`));
-        if (chunk?.rank !== undefined && (!Number.isInteger(chunk.rank) || chunk.rank < 1)) output.push(diagnostic("warning", "rag-rank", "RAG rank should be a positive integer.", `$[${index}].rank`));
-        if (!chunk?.source && !chunk?.url && !chunk?.metadata?.source) output.push(diagnostic("info", "rag-source", "Retrieved chunk has no source identifier.", `$[${index}]`));
-      });
-    }
+    const values = Array.isArray(parsed.value)
+      ? parsed.value
+      : parsed.value.events || parsed.value.steps || parsed.value.trace || parsed.value.output || parsed.value.content || [];
+    const items = Array.isArray(values) ? values.map((item, index) => normalizeItem(item, index)) : [];
+    inspectEmptyMessages(items, output);
+    inspectToolIntegrity(items, output);
   }
   return output;
 }

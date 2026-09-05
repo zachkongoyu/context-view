@@ -19,24 +19,19 @@ export function estimateByItems(items) {
   }));
 }
 
-export function estimatePromptSections(source) {
-  const lines = String(source || "").split(/\r?\n/);
-  const sections = [];
-  let current = { label: "Preamble", text: [] };
-  let inFence = false;
-
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
-    const heading = !inFence ? line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/) : null;
-    if (heading) {
-      if (current.text.length) sections.push(current);
-      current = { label: heading[2], text: [line] };
-    } else {
-      current.text.push(line);
-    }
-  }
-  if (current.text.length) sections.push(current);
-  return sections.map((section) => ({ label: section.label, tokens: estimateTokens(section.text.join("\n")) }));
+export function estimatePromptSections(root) {
+  if (!root || typeof root !== "object") return [];
+  const sections = (root.children || []).filter((node) => node.type === "heading");
+  const total = sections.reduce((sum, node) => sum + (node.subtreeTokens || 0), 0);
+  return sections.map((node, index) => ({
+    id: node.id || `section-${index}`,
+    label: node.title,
+    tokens: node.subtreeTokens || 0,
+    startLine: node.line,
+    endLine: node.endLine,
+    share: total ? (node.subtreeTokens || 0) / total : 0,
+    node,
+  }));
 }
 
 export function analyzeContext({ inputTokens, expectedOutputTokens = 0, contextWindow = 128000, inputPrice = 0, outputPrice = 0 }) {

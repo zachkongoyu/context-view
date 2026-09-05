@@ -98,7 +98,7 @@ function responseOutputParts(item) {
     return [{ type: "tool_result", callId: firstDefined(item.call_id, item.id), result: item.output, raw: item }];
   }
   if (type === "reasoning") {
-    return [{ type: "reasoning", text: String(firstDefined(item.summary?.[0]?.text, item.content?.[0]?.text, "")), raw: item }];
+    return [{ type: "reasoning", text: String(firstDefined(item.summary?.[0]?.text, item.content?.[0]?.text, typeof item.content === "string" ? item.content : undefined, item.text, "")), raw: item }];
   }
   return normalizeContent(firstDefined(item.content, item.text));
 }

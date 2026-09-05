@@ -9,11 +9,7 @@ import { ThemeToggle } from "@/components/motion/theme-toggle";
 
 const MODES = [
   ["prompt", "Prompt"],
-  ["payload", "Payload"],
   ["trace", "Trace"],
-  ["schema", "Schema"],
-  ["compare", "Compare"],
-  ["rag", "RAG"],
 ];
 
 export function ContextViewApp() {
@@ -46,9 +42,9 @@ function ContextViewSurface() {
     let disposed = false;
     let controller = null;
 
-    import("../payload-viewer.js").then(({ mountPromptLens }) => {
+    import("../prompt-trace-viewer.js").then(({ mountContextView }) => {
       if (disposed) return;
-      controller = mountPromptLens(document, { openModal, closeModal });
+      controller = mountContextView(document, { openModal, closeModal });
       controllerRef.current = controller;
     });
 
@@ -85,47 +81,32 @@ function ContextViewSurface() {
           <span className="brand-mark" aria-hidden="true">CV</span>
           <span className="brand-copy"><strong>Context View</strong></span>
         </a>
-        <div className="header-actions">
-          <div className="privacy-state" title="No source data leaves this browser">Local only</div>
-          <ThemeToggle
-            variant="circle-blur"
-            start="top-right"
-            className="beui-theme-toggle"
-            iconClassName="size-4"
-          />
-        </div>
+        <nav className="header-mode-nav" aria-label="Viewer mode">
+          <Tabs value={mode} onValueChange={changeMode} variant="pill">
+            <TabsList className="mode-tabs-list grid grid-cols-2 bg-transparent p-0">
+              {MODES.map(([value, label]) => (
+                <TabsTrigger key={value} value={value} className="mode-tab-trigger rounded-md px-4" indicatorClassName="mode-tab-indicator rounded-md">
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </nav>
+        <ThemeToggle variant="circle-blur" start="top-right" className="beui-theme-toggle" iconClassName="size-4" />
       </header>
 
       <div className="app-body">
-        <aside className="app-sidebar" aria-label="Inspector modes">
-          <p className="sidebar-heading">Inspect</p>
-          <nav className="mode-nav" aria-label="Inspector mode">
-            <Tabs value={mode} onValueChange={changeMode} variant="pill" className="w-full">
-              <TabsList className="mode-tabs-list grid w-full gap-1 bg-transparent p-0">
-                {MODES.map(([value, label]) => (
-                  <TabsTrigger key={value} value={value} className="mode-tab-trigger w-full justify-start rounded-md px-3 py-2" indicatorClassName="mode-tab-indicator rounded-md">
-                    {label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </nav>
-          <div className="sidebar-note">
-            <strong>Browser only</strong>
-            <span>Your source never leaves this device.</span>
-          </div>
-        </aside>
-
         <div className="app-main">
           <section className="workbench">
             <section className="action-bar" aria-label="Source actions">
+              <div className="live-insights" aria-label="Live analysis">
+                <strong id="token-count">0 tokens</strong>
+                <button id="diagnostic-summary" type="button" data-severity="clear">No issues</button>
+              </div>
               <div className="action-group">
-                <Button variant="secondary" size="sm" className="action-button" data-action="tokens">Tokens</Button>
-                <Button variant="primary" size="sm" className="action-button primary-action" data-action="validate" ripple>Validate</Button>
-                <Button variant="secondary" size="sm" className="action-button" data-action="convert" hidden>Convert</Button>
-                <Button variant="secondary" size="sm" className="action-button" data-action="redact">Redact</Button>
-                <Button variant="secondary" size="sm" className="action-button" data-action="export">Export</Button>
-                <Button variant="ghost" size="sm" className="action-button" data-action="guide">How it works</Button>
+                <Button variant="ghost" size="sm" className="action-button primary-action" data-action="validate">Validate</Button>
+                <Button variant="ghost" size="sm" className="action-button" data-action="redact">Redact</Button>
+                <Button variant="ghost" size="sm" className="action-button" data-action="export">Export</Button>
               </div>
             </section>
 
@@ -146,49 +127,34 @@ function ContextViewSurface() {
                       <Button variant="ghost" size="sm" className="quiet-button danger" data-action="clear">Clear</Button>
                     </div>
                   </div>
-                  <p className="mode-hint" id="mode-hint">Markdown for instructions. XML for data boundaries.</p>
+                  <p className="mode-hint" id="mode-hint">See which sections consume the context window.</p>
                 </div>
 
                 <div id="single-editor" className="editor-wrap">
                   <label className="sr-only" htmlFor="source-input">Source input</label>
-                  <textarea id="source-input" spellCheck="false" autoComplete="off" placeholder="Paste a prompt or payload here" />
+                  <textarea id="source-input" spellCheck="false" autoComplete="off" placeholder="Paste a prompt or trace here" />
                 </div>
 
-                <div id="compare-editors" className="compare-editors" hidden>
-                  <div className="compare-source">
-                    <label htmlFor="compare-a">Version A</label>
-                    <textarea id="compare-a" spellCheck="false" autoComplete="off" placeholder="Paste version A" />
-                  </div>
-                  <div className="compare-source">
-                    <label htmlFor="compare-b">Version B</label>
-                    <textarea id="compare-b" spellCheck="false" autoComplete="off" placeholder="Paste version B" />
-                  </div>
-                </div>
               </section>
 
               <section className="viewer-pane" aria-labelledby="viewer-title">
                 <div className="pane-header viewer-header">
                   <div>
-                    <p className="pane-kicker">Visual interpretation</p>
-                    <h2 id="viewer-title">Hierarchy</h2>
+                    <p className="pane-kicker">Analysis</p>
+                    <h2 id="viewer-title">Token weight</h2>
                   </div>
-                  <div id="semantic-controls" className="segmented" aria-label="Semantic grouping" hidden>
-                    <button type="button" data-grouping="items" aria-pressed="true">Items</button>
-                    <button type="button" data-grouping="turns" aria-pressed="false">Turns</button>
-                    <button type="button" data-grouping="rounds" aria-pressed="false">Rounds</button>
+                  <div id="semantic-controls" className="segmented" aria-label="Trace filter" hidden>
+                    <button type="button" data-trace-filter="all" aria-pressed="true">All</button>
+                    <button type="button" data-trace-filter="tools" aria-pressed="false">Tools</button>
+                    <button type="button" data-trace-filter="errors" aria-pressed="false">Errors</button>
                   </div>
                 </div>
 
-                <div id="diagnostic-strip" className="diagnostic-strip" hidden />
                 <div id="viewer" className="viewer" tabIndex="-1" aria-live="polite" />
               </section>
             </main>
           </section>
 
-          <footer className="status-bar">
-            <span id="status-message">Ready. Nothing leaves this browser.</span>
-            <span id="mode-summary">Prompt hierarchy</span>
-          </footer>
         </div>
       </div>
 

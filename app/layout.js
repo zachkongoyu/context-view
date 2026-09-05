@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Context View",
-  description: "Inspect AI prompts, payloads, traces, schemas, comparisons, and retrieval context locally.",
+  description: "Inspect AI prompts and execution traces locally.",
   applicationName: "Context View",
 };
 
