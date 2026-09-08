@@ -24,4 +24,16 @@ These are design decisions inferred from the references, rather than requirement
 - Preserve separate prompt and trace drafts within the current browser tab session. File opening is local and does not upload prompt content.
 - On smaller screens, stack the reader and outline while keeping each scroll area bounded.
 
-Future work can extend the same pattern with resizable panes, exact model tokenizers, and richer trace-specific detail views. Those are separate from the current long-prompt navigation fix.
+## Trace inspection
+
+The original Trace screen permanently reserved a third of the workspace for JSON, required horizontal scrolling to reach the waterfall, and covered events with an overlay when inspecting details.
+
+- Give execution data the full workspace. Source editing opens on demand; file import and an example remain readily available.
+- Keep the event list and selected event details side by side, each with bounded scrolling. Compact overview metrics leave room for the events themselves.
+- Provide a measured timeline and a message view. Search includes recorded payloads and combines with All, Tools, and Errors filters.
+- Separate Content, Metadata, and Raw views. Tool arguments and outputs are formatted and linked by call ID. Arrow keys and previous/next controls navigate events.
+- Distinguish absent timing from recorded zero durations. Mark inferred starts, use recorded order when timing is absent, and label incomplete duration coverage as an observed span.
+- Count tool calls once; results are separate events. Surface event errors even when the enclosing run says it completed. Reported run tokens remain separate from the source-size estimate.
+- Stack events and details on narrow screens. Selecting an event brings its details into view.
+
+Trace data currently represents ordered events and linked calls/results. It does not establish a nested span hierarchy. Future work can add span-tree support for formats that record parent relationships, resizable panes, and exact model tokenizers.

@@ -26,6 +26,7 @@ function ContextViewSurface() {
   const modalBodyRef = useRef(null);
   const modalSequence = useRef(0);
   const [mode, setMode] = useState("prompt");
+  const [traceSourceOpen, setTraceSourceOpen] = useState(false);
   const [modal, setModal] = useState(null);
   const [modalView, setModalView] = useState(null);
 
@@ -38,6 +39,10 @@ function ContextViewSurface() {
   const closeModal = useCallback(() => {
     setModalView(null);
   }, []);
+
+  useEffect(() => {
+    if (mode === "trace" && traceSourceOpen) document.getElementById("source-input")?.focus({ preventScroll: true });
+  }, [mode, traceSourceOpen]);
 
   useEffect(() => {
     let disposed = false;
@@ -102,6 +107,8 @@ function ContextViewSurface() {
             <div className="workbench-heading">
               <div><h1>{mode === "prompt" ? "Prompt inspector" : "Trace inspector"}</h1><p className="workspace-description">{mode === "prompt" ? "Explore the structure behind your instructions." : "Explore timing, tool calls, and their results."}</p></div>
               <div className="action-group">
+                {mode === "trace" ? <Button variant="ghost" size="sm" className="action-button" aria-pressed={traceSourceOpen} onClick={() => setTraceSourceOpen((open) => !open)}><Braces size={15} />{traceSourceOpen ? "Hide source" : "Edit source"}</Button> : null}
+                {mode === "trace" ? <Button variant="ghost" size="sm" className="action-button" onClick={() => controllerRef.current?.runAction("sample")}>Example</Button> : null}
                 <Button variant="ghost" size="sm" className="action-button" data-action="redact"><ShieldCheck size={15} />Redact</Button>
                 <Button variant="ghost" size="sm" className="action-button" data-action="export"><Download size={15} />Export</Button>
                 <Button variant="secondary" size="sm" className="action-button primary-action" data-action="import"><Upload size={15} />Open file</Button>
@@ -118,14 +125,15 @@ function ContextViewSurface() {
               </div>
             </section>
 
-            <main className="workspace">
-              <section className="source-pane" aria-labelledby="source-title">
+            <main className="workspace" data-trace-source={traceSourceOpen ? "open" : "closed"}>
+              <section className="source-pane" aria-labelledby="source-title" hidden={mode === "trace" && !traceSourceOpen}>
                 <div className="pane-header">
                   <div className="source-identity">
                     <FileText size={17} />
                     <div><h2 id="source-title">Prompt</h2><span id="source-filename" className="source-filename">Example prompt</span></div>
                   </div>
                   <div className="source-header-tools">
+                    {mode === "trace" ? <button type="button" className="icon-button" aria-label="Close source editor" onClick={() => setTraceSourceOpen(false)}><X size={15} /></button> : null}
                     <div id="source-view-controls" className="segmented" aria-label="Source view">
                       <button type="button" data-source-view="read" aria-pressed="true"><BookOpen size={14} />Read</button>
                       <button type="button" data-source-view="edit" aria-pressed="false"><Braces size={14} />Edit</button>

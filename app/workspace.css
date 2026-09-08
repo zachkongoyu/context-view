@@ -132,8 +132,6 @@
 .pane-kicker { margin: 0 0 5px; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .8px; }
 .dialog-header h2 { margin: 0; font-size: 18px; line-height: 26px; letter-spacing: -.4px; font-weight: 600; }
 .section-stack { display: grid; gap: 12px; }
-html[data-viewer-mode="trace"] .workspace { grid-template-columns: minmax(280px, .55fr) minmax(0, 1fr); }
-html[data-viewer-mode="trace"] .viewer { display: block; overflow: auto; padding: 18px; }
 html[data-viewer-mode="trace"] .analysis-live { display: none; }
 
 @media (min-width: 1400px) {
@@ -177,9 +175,6 @@ html[data-viewer-mode="trace"] .analysis-live { display: none; }
   .action-bar { margin-top: 6px; }
   .mode-hint { display: none; }
   .app-footer { padding-bottom: 16px; }
-  .trace-detail { width: 94%; }
-  .trace-session { flex-wrap: wrap; }
-  .trace-metrics { width: 100%; }
 }
 @media (max-width: 460px) {
   .app-header { gap: 12px; }
@@ -201,4 +196,4 @@ html[data-viewer-mode="trace"] .analysis-live { display: none; }
 
 .source-pane { order: 2; } .viewer-pane { order: 1; } html[data-viewer-mode="trace"] .source-pane { order: 1; } html[data-viewer-mode="trace"] .viewer-pane { order: 2; }
 html[data-theme="dark"] .brand-mark, html[data-theme="dark"] .primary-action { color: #163c33; }
-@media (max-width: 760px) { .source-pane { order: 1; } .viewer-pane { order: 2; } html[data-viewer-mode="trace"] .trace-detail { width: 94%; } }
+@media (max-width: 760px) { .source-pane { order: 1; } .viewer-pane { order: 2; } }

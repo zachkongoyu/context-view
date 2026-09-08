@@ -14,9 +14,9 @@ const MODES = {
   },
   trace: {
     sourceTitle: "Trace",
-    viewerTitle: "Waterfall",
+    viewerTitle: "Execution trace",
     summary: "Trace waterfall",
-    hint: "Inspect timing, causality, errors, and tool payloads.",
+    hint: "Select an event to inspect its content and timing.",
   },
 };
 
@@ -79,7 +79,7 @@ export function mountContextView(root = document, options = {}) {
     mode: null,
     drafts: { prompt: SAMPLES.prompt, trace: SAMPLES.trace },
     traceFilter: "all",
-    selectedTraceId: null,
+    traceUi: {},
     promptOpenNodes: new Set(),
     promptDisclosureInitialized: false,
     sourceView: "read",
@@ -139,7 +139,7 @@ export function mountContextView(root = document, options = {}) {
     lineCount.textContent = `${lines} ${lines === 1 ? "line" : "lines"}`;
     charCount.textContent = `${source.length} chars`;
     const tokens = state.mode === "prompt" && source.trim() ? annotateTokens(parsePrompt(source)).subtreeTokens : estimateTokens(source);
-    tokenCount.textContent = `${formatCompactNumber(tokens)} tokens`;
+    tokenCount.textContent = state.mode === "trace" ? `~${formatCompactNumber(tokens)} source tokens` : `${formatCompactNumber(tokens)} tokens`;
   }
 
   function updateDiagnostics(diagnostics) {
@@ -148,7 +148,7 @@ export function mountContextView(root = document, options = {}) {
     if (counts.error) parts.push(`${counts.error} ${counts.error === 1 ? "error" : "errors"}`);
     if (counts.warning) parts.push(`${counts.warning} ${counts.warning === 1 ? "warning" : "warnings"}`);
     if (counts.info) parts.push(`${counts.info} ${counts.info === 1 ? "note" : "notes"}`);
-    diagnosticSummary.textContent = parts.length ? parts.join(" · ") : "No issues";
+    diagnosticSummary.textContent = parts.length ? parts.join(" · ") : state.mode === "trace" ? "No source issues" : "No issues";
     diagnosticSummary.dataset.severity = counts.error ? "error" : counts.warning ? "warning" : counts.info ? "info" : "clear";
     diagnosticSummary.onclick = () => showDiagnostics(diagnostics);
   }
@@ -430,11 +430,11 @@ export function mountContextView(root = document, options = {}) {
         state.latest = null;
       } else {
         const result = normalizeTrace(parsed.value);
-        const selectTrace = (id) => {
-          state.selectedTraceId = state.selectedTraceId === id ? null : id;
-          render();
-        };
-        output = result.steps.length ? renderTrace(result, { filter: state.traceFilter, selectedId: state.selectedTraceId, onSelect: selectTrace }) : emptyState("Unsupported trace", "Use an event array or an events, steps, trace, output, choices, or content root.");
+        output = result.steps.length ? renderTrace(result, {
+          ...state.traceUi,
+          filter: state.traceFilter,
+          onStateChange: (next) => { state.traceUi = next; },
+        }) : emptyState("No events to inspect", "Open a trace file or choose Edit source to paste an event array or a JSON object containing events, steps, trace, output, choices, or content.");
         state.latest = result;
       }
       diagnostics = runDiagnostics(source, "trace");
@@ -450,7 +450,6 @@ export function mountContextView(root = document, options = {}) {
     if (!MODES[mode] || mode === state.mode) return;
     documentElement?.setAttribute("data-viewer-mode", mode);
     state.mode = mode;
-    state.selectedTraceId = null;
     state.selectedPromptLine = null;
     state.selectedPromptEnd = null;
     sourceTitle.textContent = MODES[mode].sourceTitle;
@@ -537,18 +536,20 @@ export function mountContextView(root = document, options = {}) {
   }
 
   function loadSample() {
+    state.traceUi = {};
+    state.traceFilter = "all";
+    root.querySelectorAll("[data-trace-filter]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.traceFilter === "all")));
     state.drafts[state.mode] = SAMPLES[state.mode];
     sourceInput.value = state.drafts[state.mode];
-    state.selectedTraceId = null;
     resetPromptNavigation();
     state.filenames[state.mode] = `Example ${state.mode}`;
     render();
   }
 
   function clearSource() {
+    state.traceUi = {};
     state.drafts[state.mode] = "";
     sourceInput.value = "";
-    state.selectedTraceId = null;
     state.latest = null;
     resetPromptNavigation();
     state.filenames[state.mode] = `Untitled ${state.mode}`;
@@ -577,8 +578,8 @@ export function mountContextView(root = document, options = {}) {
   };
 
   listen(sourceInput, "input", () => {
+    state.traceUi = {};
     state.drafts[state.mode] = sourceInput.value;
-    state.selectedTraceId = null;
     state.selectedPromptLine = null;
     state.selectedPromptEnd = null;
     if (state.filenames[state.mode].startsWith("Example")) state.filenames[state.mode] = `Untitled ${state.mode}`;
@@ -593,6 +594,11 @@ export function mountContextView(root = document, options = {}) {
       const text = await file.text();
       if (lifecycle.signal.aborted || sequence !== importSequence) return;
       state.drafts[mode] = text;
+      if (mode === "trace") {
+        state.traceUi = {};
+        state.traceFilter = "all";
+        root.querySelectorAll("[data-trace-filter]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.traceFilter === "all")));
+      }
       state.filenames[mode] = file.name;
       if (state.mode === mode) {
         sourceInput.value = text;
@@ -612,7 +618,6 @@ export function mountContextView(root = document, options = {}) {
   root.querySelectorAll("[data-trace-filter]").forEach((button) => listen(button, "click", () => {
     if (state.mode !== "trace") return;
     state.traceFilter = button.dataset.traceFilter;
-    state.selectedTraceId = null;
     root.querySelectorAll("[data-trace-filter]").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)));
     render();
   }));

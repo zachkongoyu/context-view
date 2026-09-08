@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./workspace.css";
+@import "./trace.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -129,121 +130,6 @@ pre,
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-
-.trace-devtool {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.trace-session {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-}
-
-.trace-session-id { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 7px; }
-.trace-session-id strong { overflow: hidden; font: 600 13px/18px var(--font-geist-mono), ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
-.trace-session-id > span:last-child { grid-column: 2; color: var(--faint); font-size: 11px; line-height: 16px; }
-.trace-status-dot { width: 7px; height: 7px; grid-row: 1 / 3; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
-.trace-metrics { flex: 0 0 auto; display: flex; align-items: stretch; }
-.trace-metric { min-width: 58px; padding: 0 9px; border-left: 1px solid var(--line); }
-.trace-metric-label { display: block; color: var(--faint); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
-.trace-metric-value { display: block; margin-top: 1px; font: 600 13px/18px var(--font-geist-mono), ui-monospace, monospace; }
-
-.trace-insight { min-height: 34px; display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-left: 3px solid var(--accent); background: var(--surface-2); color: var(--muted); font-size: 13px; line-height: 18px; }
-.trace-insight strong { color: var(--text); font-weight: 600; }
-.trace-timing-note { margin-left: auto; color: var(--faint); font-family: var(--font-geist-mono), ui-monospace, monospace; }
-
-.trace-workspace {
-  position: relative;
-  min-width: 0;
-  min-height: 360px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-}
-
-.trace-table { min-width: 0; overflow-x: auto; transition: opacity 150ms ease; }
-.trace-table-head,
-.trace-row {
-  min-width: 980px;
-  display: grid;
-  grid-template-columns: 32px minmax(180px, 0.8fr) 104px 74px 72px 72px minmax(360px, 2.2fr);
-  align-items: center;
-}
-.trace-table-head { position: sticky; top: 0; z-index: 4; min-height: 34px; border-bottom: 1px solid var(--line); background: var(--surface-2); color: var(--faint); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
-.trace-table-head > span:not(.waterfall-axis) { padding: 0 7px; }
-.trace-rows { min-width: 980px; }
-.trace-row { width: 100%; min-height: 39px; padding: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
-.trace-row:last-child { border-bottom: 0; }
-.trace-row:hover { background: var(--surface-2); }
-.trace-row.is-selected { position: relative; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
-.trace-row.is-selected::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; background: var(--accent); }
-.trace-row.has-error { background: color-mix(in srgb, var(--danger) 5%, var(--surface)); }
-.trace-sequence { padding-left: 9px; color: var(--faint); font: 500 11px/16px var(--font-geist-mono), ui-monospace, monospace; }
-.trace-event-name { min-width: 0; display: grid; padding: 7px 8px; }
-.trace-event-name strong { overflow: hidden; font-size: 13px; line-height: 18px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.trace-event-name small { overflow: hidden; color: var(--faint); font-size: 11px; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
-.trace-event-kind { overflow: hidden; padding: 0 8px; color: var(--muted); font: 550 11px/16px var(--font-geist-mono), ui-monospace, monospace; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.trace-actor { width: max-content; max-width: calc(100% - 8px); margin: 0 4px; padding: 2px 6px; overflow: hidden; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font: 600 11px/16px var(--font-geist-mono), ui-monospace, monospace; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.trace-number { padding: 0 8px; color: var(--muted); font: 500 11px/16px var(--font-geist-mono), ui-monospace, monospace; text-align: right; white-space: nowrap; }
-.waterfall-axis { align-self: stretch; display: flex; align-items: center; justify-content: space-between; padding: 0 7px; background-image: linear-gradient(to right, var(--line) 1px, transparent 1px); background-size: 25% 100%; color: var(--faint); font: 500 11px/16px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: normal; text-transform: none; }
-.waterfall-cell { height: 100%; padding: 0 5px; }
-.waterfall-track { position: relative; height: 100%; min-height: 44px; background-image: linear-gradient(to right, var(--line) 1px, transparent 1px); background-size: 25% 100%; }
-.waterfall-bar { position: absolute; top: 50%; left: var(--waterfall-start); width: max(3px, var(--waterfall-width)); height: 10px; border-radius: 3px; background: var(--role-context); transform: translateY(-50%); opacity: 0.86; }
-.waterfall-bar.role-user { background: var(--role-user); }
-.waterfall-bar.role-assistant { background: var(--role-assistant); }
-.waterfall-bar.role-tool { background: var(--role-tool); }
-.waterfall-bar.is-error { background: var(--danger); }
-.trace-filter-empty { min-height: 140px; display: grid; place-items: center; color: var(--faint); font-size: 11px; }
-
-.trace-detail { position: absolute; z-index: 8; inset: 0 0 0 auto; width: min(420px, 46%); overflow: auto; display: grid; align-content: start; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -18px 0 48px rgb(0 0 0 / 0.12); animation: trace-detail-enter 160ms ease-out; }
-@keyframes trace-detail-enter { from { transform: translateX(18px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.trace-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); }
-.trace-detail-eyebrow { display: block; margin-bottom: 3px; color: var(--faint); font: 600 11px/16px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: 0.04em; text-transform: uppercase; }
-.trace-detail-header h3 { margin: 0; font-size: 16px; line-height: 22px; font-weight: 650; overflow-wrap: anywhere; }
-.trace-detail-controls { display: flex; align-items: center; gap: 7px; }
-.trace-detail-role { flex: 0 0 auto; padding: 2px 6px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font: 600 11px/16px var(--font-geist-mono), ui-monospace, monospace; text-transform: uppercase; }
-.trace-detail-close { min-height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--muted); cursor: pointer; font-size: 11px; }
-.trace-detail-facts { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
-.trace-detail-fact { min-width: 0; display: grid; gap: 2px; padding: 10px 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.trace-detail-fact:nth-child(even) { border-right: 0; }
-.trace-detail-fact span { color: var(--faint); font-size: 11px; line-height: 16px; font-weight: 600; text-transform: uppercase; }
-.trace-detail-fact strong { overflow-wrap: anywhere; font: 550 13px/19px var(--font-geist-mono), ui-monospace, monospace; }
-.trace-detail-section { display: grid; gap: 8px; padding: 12px; }
-.trace-detail-section h4 { margin: 0; color: var(--faint); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
-.trace-detail-text { color: var(--text); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.trace-detail-code { max-height: 300px; padding: 9px 10px; border-radius: 6px; font-size: 12px; line-height: 18px; }
-.trace-detail-error { padding: 9px 10px; border-left: 3px solid var(--danger); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); color: var(--danger); font: 500 12px/18px var(--font-geist-mono), ui-monospace, monospace; white-space: pre-wrap; }
-.trace-link { justify-self: start; padding: 0; border: 0; background: transparent; color: var(--accent-strong); cursor: pointer; font-size: 13px; line-height: 18px; text-decoration: underline; text-underline-offset: 2px; }
-.trace-raw { border-top: 1px solid var(--line); }
-.trace-raw summary { padding: 10px 12px; color: var(--muted); cursor: pointer; font-size: 13px; line-height: 18px; font-weight: 550; }
-.trace-raw .trace-detail-code { margin: 0 12px 12px; }
-.trace-detail-empty { min-height: 140px; display: grid; place-items: center; padding: 20px; color: var(--faint); font-size: 13px; text-align: center; }
-
-.role-user { --role-color: var(--role-user); }
-.role-assistant { --role-color: var(--role-assistant); }
-.role-tool { --role-color: var(--role-tool); }
-.role-context { --role-color: var(--role-context); }
-.trace-actor.role-user,
-.trace-detail-role.role-user { border-color: color-mix(in srgb, var(--role-user) 30%, var(--line)); color: var(--role-user); }
-.trace-actor.role-assistant,
-.trace-detail-role.role-assistant { border-color: color-mix(in srgb, var(--role-assistant) 30%, var(--line)); color: var(--role-assistant); }
-.trace-actor.role-tool,
-.trace-detail-role.role-tool { border-color: color-mix(in srgb, var(--role-tool) 30%, var(--line)); color: var(--role-tool); }
-.trace-actor.role-context,
-.trace-detail-role.role-context { border-color: color-mix(in srgb, var(--role-context) 30%, var(--line)); color: var(--role-context); }
-
 
 .validation-list { display: grid; gap: 6px; }
 .validation-item { padding: 7px 9px; border-left: 3px solid var(--line-strong); background: var(--surface-2); font-size: 12px; line-height: 18px; font-weight: 400; }
