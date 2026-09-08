@@ -36,13 +36,13 @@ export function Glossary() {
   const matches = searchTerms(query, category);
   return <div className="glossary">
     <div className="glossary-toolbar">
-      <label className="glossary-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search agent concepts</span><input type="search" placeholder="Search a concept or an alias…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear concept search" onClick={() => setQuery("")}><X size={15} /></button>}</label>
+      <div className="glossary-search"><Search size={17} aria-hidden="true" /><input type="search" aria-label="Search agent concepts" placeholder="Search a concept or an alias…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear concept search" onClick={() => setQuery("")}><X size={15} /></button>}</div>
       <span className="glossary-count" aria-live="polite">{matches.length} of {TERMS.length} concepts</span>
     </div>
     <div className="glossary-filters" role="group" aria-label="Concept categories">
       {[{ id: "all", name: "All concepts" }, ...CATEGORIES].map((group) => <button type="button" key={group.id} aria-pressed={category === group.id} onClick={() => setCategory(group.id)}>{group.name}</button>)}
     </div>
-    {!matches.length && <div className="glossary-empty"><Search size={25} /><h3>No matching concepts</h3><p>Try “message,” “session,” or an alias such as “LLM.”</p><button type="button" className="learn-button" onClick={() => { setQuery(""); setCategory("all"); }}>Show all concepts</button></div>}
+    {!matches.length && <div className="glossary-empty"><Search size={25} /><h3>No matching concepts</h3><p>Try another term or choose All concepts to search every category.</p><button type="button" className="learn-button" onClick={() => { setQuery(""); setCategory("all"); }}>Show all concepts</button></div>}
     {CATEGORIES.map((group) => {
       const items = matches.filter((term) => term.category === group.id);
       if (!items.length) return null;
