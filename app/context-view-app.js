@@ -6,6 +6,7 @@ import { Button } from "@/components/motion/button/base";
 import { MorphingModal } from "@/components/motion/morphing-modal";
 import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
+import { BookOpen, Braces, CheckCheck, Download, FileText, Layers2, LockKeyhole, ShieldCheck, Upload, X } from "lucide-react";
 
 const MODES = [
   ["prompt", "Prompt"],
@@ -78,7 +79,7 @@ function ContextViewSurface() {
     <div className="app-shell">
       <header className="app-header">
         <a className="brand" href="/" aria-label="Context View home">
-          <span className="brand-mark" aria-hidden="true">CV</span>
+          <span className="brand-mark" aria-hidden="true"><Layers2 size={19} strokeWidth={1.8} /></span>
           <span className="brand-copy"><strong>Context View</strong></span>
         </a>
         <nav className="header-mode-nav" aria-label="Viewer mode">
@@ -86,63 +87,64 @@ function ContextViewSurface() {
             <TabsList className="mode-tabs-list grid grid-cols-2 bg-transparent p-0">
               {MODES.map(([value, label]) => (
                 <TabsTrigger key={value} value={value} className="mode-tab-trigger rounded-md px-4" indicatorClassName="mode-tab-indicator rounded-md">
-                  {label}
+                  {value === "prompt" ? <FileText size={15} /> : <Braces size={15} />}{label}
                 </TabsTrigger>
               ))}
             </TabsList>
           </Tabs>
         </nav>
-        <ThemeToggle variant="circle-blur" start="top-right" className="beui-theme-toggle" iconClassName="size-4" />
+        <div className="header-tools"><span className="local-status"><span />Runs locally</span><ThemeToggle variant="circle-blur" start="top-right" className="beui-theme-toggle" iconClassName="size-4" /></div>
       </header>
 
       <div className="app-body">
         <div className="app-main">
           <section className="workbench">
+            <div className="workbench-heading">
+              <div><h1>{mode === "prompt" ? "Prompt inspector" : "Trace inspector"}</h1><p className="workspace-description">{mode === "prompt" ? "Explore the structure behind your instructions." : "Explore timing, tool calls, and their results."}</p></div>
+              <div className="action-group">
+                <Button variant="ghost" size="sm" className="action-button" data-action="redact"><ShieldCheck size={15} />Redact</Button>
+                <Button variant="ghost" size="sm" className="action-button" data-action="export"><Download size={15} />Export</Button>
+                <Button variant="secondary" size="sm" className="action-button primary-action" data-action="import"><Upload size={15} />Open file</Button>
+                <input id="source-file" type="file" accept=".txt,.md,.markdown,.json,.jsonl,.xml,.log,text/*,application/json" hidden />
+              </div>
+            </div>
             <section className="action-bar" aria-label="Source actions">
               <div className="live-insights" aria-label="Live analysis">
-                <strong id="token-count">0 tokens</strong>
+                <CheckCheck size={14} /><strong id="token-count">0 tokens</strong>
                 <button id="diagnostic-summary" type="button" data-severity="clear">No issues</button>
               </div>
               <div className="action-group">
-                <Button variant="ghost" size="sm" className="action-button primary-action" data-action="validate">Validate</Button>
-                <Button variant="ghost" size="sm" className="action-button" data-action="redact">Redact</Button>
-                <Button variant="ghost" size="sm" className="action-button" data-action="export">Export</Button>
+                <span className="mode-hint" id="mode-hint">Select a section to jump to its content.</span>
               </div>
             </section>
 
             <main className="workspace">
               <section className="source-pane" aria-labelledby="source-title">
                 <div className="pane-header">
-                  <div>
-                    <p className="pane-kicker">Editable source</p>
-                    <h1 id="source-title">Prompt</h1>
+                  <div className="source-identity">
+                    <FileText size={17} />
+                    <div><h2 id="source-title">Prompt</h2><span id="source-filename" className="source-filename">Example prompt</span></div>
                   </div>
                   <div className="source-header-tools">
-                    <div className="source-meta" aria-live="polite">
-                      <span id="line-count">1 line</span>
-                      <span id="char-count">0 chars</span>
-                    </div>
-                    <div className="source-actions">
-                      <Button variant="ghost" size="sm" className="quiet-button" data-action="sample">Reset example</Button>
-                      <Button variant="ghost" size="sm" className="quiet-button danger" data-action="clear">Clear</Button>
+                    <div id="source-view-controls" className="segmented" aria-label="Source view">
+                      <button type="button" data-source-view="read" aria-pressed="true"><BookOpen size={14} />Read</button>
+                      <button type="button" data-source-view="edit" aria-pressed="false"><Braces size={14} />Edit</button>
                     </div>
                   </div>
-                  <p className="mode-hint" id="mode-hint">See which sections consume the context window.</p>
                 </div>
 
-                <div id="single-editor" className="editor-wrap">
+                <div id="source-reader" className="source-reader" tabIndex="0" aria-label="Prompt reader" />
+                <div id="single-editor" className="editor-wrap" hidden>
                   <label className="sr-only" htmlFor="source-input">Source input</label>
                   <textarea id="source-input" spellCheck="false" autoComplete="off" placeholder="Paste a prompt or trace here" />
                 </div>
-
+                <div className="source-footer"><div className="source-meta"><span id="line-count">1 line</span><span id="char-count">0 chars</span></div><span id="source-position">Reading view</span><div className="source-actions"><button type="button" className="quiet-button" data-action="sample">Example</button><button type="button" className="quiet-button danger" data-action="clear" title="Clear source" aria-label="Clear source"><X size={14} /></button></div></div>
               </section>
 
               <section className="viewer-pane" aria-labelledby="viewer-title">
                 <div className="pane-header viewer-header">
-                  <div>
-                    <p className="pane-kicker">Analysis</p>
-                    <h2 id="viewer-title">Token weight</h2>
-                  </div>
+                  <div className="analysis-heading"><span className="analysis-mark"><Layers2 size={16} /></span><h2 id="viewer-title">Context overview</h2></div>
+                  <span id="analysis-live" className="analysis-live"><span />Live</span>
                   <div id="semantic-controls" className="segmented" aria-label="Trace filter" hidden>
                     <button type="button" data-trace-filter="all" aria-pressed="true">All</button>
                     <button type="button" data-trace-filter="tools" aria-pressed="false">Tools</button>
@@ -150,11 +152,11 @@ function ContextViewSurface() {
                   </div>
                 </div>
 
-                <div id="viewer" className="viewer" tabIndex="-1" aria-live="polite" />
+                <div id="viewer" className="viewer" tabIndex="-1" />
               </section>
             </main>
           </section>
-
+          <footer className="app-footer"><span><LockKeyhole size={12} />Your source stays in this browser.</span></footer>
         </div>
       </div>
 

@@ -1,15 +1,16 @@
 import { parseJson } from "./conversation-model.js";
 import { diagnosticCounts, redactSource, runDiagnostics } from "./diagnostics.js";
 import { annotateTokens, parsePrompt } from "./prompt-parser.js";
-import { estimatePromptSections, estimateTokens, formatCompactNumber } from "./token-estimator.js";
+import { estimateTokens, formatCompactNumber } from "./token-estimator.js";
 import { normalizeTrace, renderTrace } from "./trace-viewer.js";
+import { renderPromptReader, sourceRange } from "./prompt-reader.js";
 
 const MODES = {
   prompt: {
     sourceTitle: "Prompt",
-    viewerTitle: "Token weight",
+    viewerTitle: "Context overview",
     summary: "Prompt token weight",
-    hint: "See which sections consume the context window.",
+    hint: "Select a section to jump to its content.",
   },
   trace: {
     sourceTitle: "Trace",
@@ -81,6 +82,11 @@ export function mountContextView(root = document, options = {}) {
     selectedTraceId: null,
     promptOpenNodes: new Set(),
     promptDisclosureInitialized: false,
+    sourceView: "read",
+    selectedPromptLine: null,
+    selectedPromptEnd: null,
+    outlineQuery: "",
+    filenames: { prompt: "Example prompt", trace: "Example trace" },
     latest: null,
   };
   const documentElement = root.documentElement || root.ownerDocument?.documentElement;
@@ -94,6 +100,21 @@ export function mountContextView(root = document, options = {}) {
   const tokenCount = root.getElementById("token-count");
   const diagnosticSummary = root.getElementById("diagnostic-summary");
   const semanticControls = root.getElementById("semantic-controls");
+  const reader = root.getElementById("source-reader");
+  const editor = root.getElementById("single-editor");
+  const sourceViewControls = root.getElementById("source-view-controls");
+  const sourceFilename = root.getElementById("source-filename");
+  const sourcePosition = root.getElementById("source-position");
+  const sourceFile = root.getElementById("source-file");
+  let readerSource = null;
+  let importSequence = 0;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("context-view-drafts") || "null");
+    for (const mode of Object.keys(MODES)) {
+      if (typeof saved?.drafts?.[mode] === "string") state.drafts[mode] = saved.drafts[mode];
+      if (typeof saved?.filenames?.[mode] === "string") state.filenames[mode] = saved.filenames[mode];
+    }
+  } catch { /* A blocked or full session store must not prevent editing. */ }
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -132,13 +153,23 @@ export function mountContextView(root = document, options = {}) {
     diagnosticSummary.onclick = () => showDiagnostics(diagnostics);
   }
 
-  function fitEditor() {
-    requestAnimationFrame(() => {
-      if (lifecycle.signal.aborted) return;
-      sourceInput.style.height = "0px";
-      const minimum = Number.parseFloat(getComputedStyle(sourceInput).minHeight) || 0;
-      sourceInput.style.height = `${Math.max(sourceInput.scrollHeight, minimum)}px`;
-    });
+  function updateSourceView() {
+    const reading = state.mode === "prompt" && state.sourceView === "read";
+    reader.hidden = !reading;
+    editor.hidden = reading;
+    sourceViewControls.hidden = state.mode !== "prompt";
+    sourceFilename.textContent = state.filenames[state.mode];
+    root.querySelectorAll("[data-source-view]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.sourceView === state.sourceView)));
+    if (reading && readerSource !== currentSource()) {
+      readerSource = currentSource();
+      reader.replaceChildren(readerSource.trim() ? renderPromptReader(readerSource) : emptyState("Make room for your next prompt", "Open a text file or switch to Edit to paste your prompt."));
+    }
+    if (!state.selectedPromptLine) reader.querySelectorAll(".is-highlighted").forEach((node) => node.classList.remove("is-highlighted"));
+    sourcePosition.textContent = state.selectedPromptLine && state.mode === "prompt" ? `Lines ${state.selectedPromptLine}–${state.selectedPromptEnd}` : reading ? "Reading view" : "Editable source";
+  }
+
+  function saveDrafts() {
+    try { sessionStorage.setItem("context-view-drafts", JSON.stringify({ drafts: state.drafts, filenames: state.filenames })); } catch { /* Session persistence is optional. */ }
   }
 
   function openDialog(kicker, title, content) {
@@ -153,20 +184,35 @@ export function mountContextView(root = document, options = {}) {
     return element("pre", "", typeof value === "string" ? value : JSON.stringify(value, null, 2));
   }
 
-  function sourceOffsetForLine(source, line) {
-    let offset = 0;
-    const lines = source.split(/\r?\n/);
-    for (let index = 0; index < Math.max(0, line - 1); index += 1) offset += lines[index].length + 1;
-    return offset;
-  }
-
   function focusSourceRange(source, startLine, endLine = startLine) {
-    const lines = source.split(/\r?\n/);
-    const start = sourceOffsetForLine(source, startLine);
-    const end = sourceOffsetForLine(source, Math.min(lines.length, endLine + 1));
-    sourceInput.focus();
-    sourceInput.setSelectionRange(start, Math.max(start, end - 1));
-    sourceInput.scrollTop = Math.max(0, (startLine - 2) * 18);
+    state.selectedPromptLine = startLine;
+    state.selectedPromptEnd = endLine;
+    sourcePosition.textContent = `Lines ${startLine}–${endLine}`;
+    viewer.querySelectorAll(".prompt-jump").forEach((row) => {
+      const selected = Number(row.dataset.line) === startLine;
+      row.setAttribute("aria-current", String(selected));
+      row.closest(".prompt-tree-row").classList.toggle("is-selected", selected);
+    });
+    if (state.sourceView === "read") {
+      const blocks = [...reader.querySelectorAll("[data-source-line]")];
+      const target = blocks.find((block) => Number(block.dataset.sourceLine) >= startLine);
+      blocks.forEach((block) => block.classList.toggle("is-highlighted", Number(block.dataset.sourceLine) >= startLine && Number(block.dataset.sourceLine) <= endLine));
+      if (target) reader.scrollTo({ top: reader.scrollTop + target.getBoundingClientRect().top - reader.getBoundingClientRect().top - 30 });
+    } else {
+      const { start, end } = sourceRange(source, startLine, endLine);
+      sourceInput.focus({ preventScroll: true });
+      sourceInput.setSelectionRange(start, end);
+      // Measure the actual wrapped text; source line numbers are not visual rows.
+      const mirror = element("div", "editor-measure");
+      const styles = getComputedStyle(sourceInput);
+      for (const property of ["font", "letter-spacing", "line-height", "padding", "tab-size", "word-break", "overflow-wrap"]) mirror.style.setProperty(property, styles.getPropertyValue(property));
+      mirror.style.width = `${sourceInput.clientWidth}px`;
+      mirror.textContent = source.slice(0, start) + "\u200b";
+      document.body.append(mirror);
+      sourceInput.scrollTop = Math.max(0, mirror.getBoundingClientRect().height - Number.parseFloat(styles.lineHeight) - 48);
+      mirror.remove();
+    }
+    if (window.matchMedia("(max-width: 760px)").matches) root.querySelector(".source-pane").scrollIntoView({ block: "start" });
   }
 
   function promptNodeLabel(node) {
@@ -188,23 +234,23 @@ export function mountContextView(root = document, options = {}) {
 
   function renderPromptTree(source, rootNode, topLevelTones) {
     const tree = element("div", "token-section-list prompt-tree");
+    tree.setAttribute("aria-label", "Section outline");
     const renderNode = (node, depth, toneIndex) => {
       if (node.type === "text") return null;
       const structuralChildren = (node.children || []).filter((child) => child.type !== "text");
       const branch = element("div", `prompt-tree-node prompt-${node.type}`);
       branch.dataset.nodeId = node.id;
+      branch.dataset.title = (node.title || node.text || "").toLowerCase();
       branch.style.setProperty("--prompt-depth", String(Math.min(depth, 5)));
 
       const row = element("div", "token-section-row prompt-tree-row");
-      row.tabIndex = 0;
-      row.setAttribute("role", "button");
-      row.setAttribute("aria-label", `${node.title || node.text || promptNodeLabel(node)}, lines ${node.line} to ${node.endLine}, ${node.subtreeTokens} tokens, ${Math.round(node.share * 100)} percent`);
-      row.addEventListener("click", () => focusSourceRange(source, node.line, node.endLine));
-      row.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        focusSourceRange(source, node.line, node.endLine);
-      });
+      row.classList.toggle("is-selected", state.selectedPromptLine === node.line);
+      const jump = element("button", "prompt-jump");
+      jump.type = "button";
+      jump.dataset.line = node.line;
+      jump.setAttribute("aria-current", String(state.selectedPromptLine === node.line));
+      jump.setAttribute("aria-label", `${node.title || node.text || promptNodeLabel(node)}, lines ${node.line} to ${node.endLine}, ${node.subtreeTokens} tokens, ${Math.round(node.share * 100)} percent`);
+      jump.addEventListener("click", () => focusSourceRange(source, node.line, node.endLine));
 
       const identity = element("span", "token-section-name prompt-tree-name");
       if (structuralChildren.length) {
@@ -217,20 +263,19 @@ export function mountContextView(root = document, options = {}) {
           event.stopPropagation();
           if (state.promptOpenNodes.has(node.id)) state.promptOpenNodes.delete(node.id);
           else state.promptOpenNodes.add(node.id);
-          render();
+          const open = state.promptOpenNodes.has(node.id);
+          disclosure.setAttribute("aria-expanded", String(open));
+          disclosure.setAttribute("aria-label", `${open ? "Collapse" : "Expand"} ${node.title || promptNodeLabel(node)}`);
+          branch.querySelector(":scope > .prompt-tree-children").hidden = !open;
         });
-        identity.append(disclosure);
-      } else identity.append(element("span", "prompt-disclosure-spacer"));
+        row.append(disclosure);
+      } else row.append(element("span", "prompt-disclosure-spacer"));
       identity.append(
         element("span", `prompt-kind tone-${toneIndex % 6}`, promptNodeLabel(node)),
         element("strong", "", node.title || node.text || promptNodeLabel(node)),
-        element("small", "", `lines ${node.line}–${node.endLine}`),
       );
-      const bar = element("span", "token-section-track");
-      const fill = element("span", `token-section-fill tone-${toneIndex % 6}`);
-      fill.style.setProperty("--token-share", `${node.share * 100}%`);
-      bar.append(fill);
-      row.append(identity, bar, element("span", "token-section-count", formatCompactNumber(node.subtreeTokens)), element("span", "token-section-share", `${Math.round(node.share * 100)}%`));
+      jump.append(identity, element("span", "token-section-count", formatCompactNumber(node.subtreeTokens)), element("span", "token-section-share", `${Math.round(node.share * 100)}%`));
+      row.append(jump);
       branch.append(row);
 
       if (structuralChildren.length) {
@@ -256,7 +301,7 @@ export function mountContextView(root = document, options = {}) {
   function renderTokenMap(source) {
     if (!source.trim()) return { node: emptyState("Paste a prompt", "Section structure and token weight will appear here."), diagnostics: [] };
     const prompt = annotateTokens(parsePrompt(source));
-    const sections = estimatePromptSections(prompt);
+    const sections = prompt.children.filter((node) => node.subtreeTokens > 0).map((node) => ({ node, label: node.title || (node.type === "text" ? "Unsectioned text" : promptNodeLabel(node)), tokens: node.subtreeTokens, share: node.share, startLine: node.line, endLine: node.endLine }));
     const diagnostics = runDiagnostics(source, "prompt");
     const total = prompt.subtreeTokens;
     const largest = sections.reduce((current, section) => !current || section.tokens > current.tokens ? section : current, null);
@@ -267,20 +312,19 @@ export function mountContextView(root = document, options = {}) {
         if (node.type !== "root" && (depth <= 1 || node.share >= 0.1)) state.promptOpenNodes.add(node.id);
         (node.children || []).forEach((child) => seedOpenNodes(child, depth + 1));
       };
-      seedOpenNodes(prompt);
+      if (countPromptKinds(prompt).heading <= 8) seedOpenNodes(prompt);
       state.promptDisclosureInitialized = true;
     }
 
     const summary = element("section", "token-summary");
     const headline = element("div", "token-summary-headline");
-    headline.append(element("span", "token-summary-label", "Estimated input"), element("strong", "token-summary-value", `${formatCompactNumber(total)} tokens`));
-    const dominant = element("div", "token-dominant");
-    dominant.append(
-      element("span", "", "Largest section"),
-      element("strong", "", largest ? largest.label : "—"),
-      element("span", "", largest ? `${Math.round(largest.share * 100)}% · ${formatCompactNumber(largest.tokens)} tokens` : "—"),
-    );
-    summary.append(headline, dominant);
+    const totalValue = element("strong", "token-summary-value", formatCompactNumber(total));
+    totalValue.append(element("small", "", "tokens"));
+    headline.append(element("span", "token-summary-label", "Estimated input"), totalValue);
+    const counts = countPromptKinds(prompt);
+    const structure = element("div", "token-summary-structure");
+    structure.append(element("span", "token-summary-label", "Sections"), element("strong", "token-summary-value", counts.heading));
+    summary.append(headline, structure);
 
     const stack = element("div", "token-stack");
     stack.setAttribute("aria-label", "Prompt token distribution");
@@ -291,16 +335,77 @@ export function mountContextView(root = document, options = {}) {
       segment.title = `${section.label}: ${section.tokens} tokens (${Math.round(section.share * 100)}%)`;
       segment.setAttribute("aria-label", segment.title);
       segment.addEventListener("click", () => focusSourceRange(source, section.startLine, section.endLine));
-      if (section.share >= 0.12) segment.append(element("span", "", section.label));
       stack.append(segment);
     });
 
-    const counts = countPromptKinds(prompt);
-    const countStrip = element("div", "prompt-counts", `${counts.heading} sections · ${counts.xml} data boundaries · ${counts.fence} code blocks`);
+    const distribution = element("section", "distribution");
+    const distributionHeading = element("div", "distribution-heading");
+    distributionHeading.append(element("span", "", "Token distribution"), element("span", "", `${sections.length} top-level blocks`));
+    const dominant = element("div", "token-dominant");
+    dominant.append(element("span", "", "Largest section"), element("strong", "", largest?.label || "—"), element("span", "", largest ? `${Math.round(largest.share * 100)}%` : "—"));
+    distribution.append(distributionHeading, stack, dominant);
+    const outlineHeader = element("div", "outline-header");
+    const title = element("h3", "", "Section outline");
+    const collapse = element("button", "quiet-button outline-collapse", state.promptOpenNodes.size ? "Collapse all" : "Expand all");
+    collapse.type = "button";
+    collapse.addEventListener("click", () => {
+      const shouldOpen = collapse.textContent === "Expand all";
+      container.querySelectorAll(".prompt-tree-node").forEach((branch) => {
+        const children = branch.querySelector(":scope > .prompt-tree-children");
+        const disclosure = branch.querySelector(":scope > .prompt-tree-row > .prompt-disclosure");
+        if (!children || !disclosure) return;
+        if (shouldOpen) state.promptOpenNodes.add(branch.dataset.nodeId);
+        else state.promptOpenNodes.delete(branch.dataset.nodeId);
+        children.hidden = !shouldOpen;
+        disclosure.setAttribute("aria-expanded", String(shouldOpen));
+        disclosure.setAttribute("aria-label", `${shouldOpen ? "Collapse" : "Expand"} ${branch.dataset.title}`);
+      });
+      collapse.textContent = shouldOpen ? "Collapse all" : "Expand all";
+    });
+    outlineHeader.append(title, collapse);
+    const searchWrap = element("div", "outline-search");
+    const searchIcon = element("span", "search-icon");
+    searchIcon.setAttribute("aria-hidden", "true");
+    const search = element("input");
+    search.type = "search";
+    search.placeholder = "Find a section…";
+    search.setAttribute("aria-label", "Find a section");
+    search.value = state.outlineQuery;
+    searchWrap.append(searchIcon, search);
+    const columns = element("div", "outline-columns");
+    columns.append(element("span", "", "Section"), element("span", "", "Tokens"), element("span", "", "Share"));
     const topLevelTones = new Map(sections.map((section, index) => [section.node.id, index]));
     const tree = renderPromptTree(source, prompt, topLevelTones);
-    const note = element("p", "token-estimate-note", "Approximate tokenizer. Subtree weight remains visible when a branch is collapsed.");
-    container.append(summary, stack, countStrip, tree, note);
+    const noMatches = element("div", "outline-empty", "No matching sections.");
+    const filterTree = () => {
+      const query = search.value.trim().toLowerCase();
+      state.outlineQuery = search.value;
+      let matches = 0;
+      const visit = (branch, parentMatches = false) => {
+        const ownMatch = parentMatches || branch.dataset.title.includes(query);
+        const children = branch.querySelector(":scope > .prompt-tree-children");
+        let childMatch = false;
+        if (children) {
+          for (const child of children.children) childMatch = visit(child, ownMatch && Boolean(query)) || childMatch;
+          children.hidden = query ? !childMatch : !state.promptOpenNodes.has(branch.dataset.nodeId);
+          const disclosure = branch.querySelector(":scope > .prompt-tree-row > .prompt-disclosure");
+          disclosure.setAttribute("aria-expanded", String(!children.hidden));
+          disclosure.setAttribute("aria-label", `${children.hidden ? "Expand" : "Collapse"} ${branch.dataset.title}`);
+        }
+        branch.hidden = !(ownMatch || childMatch);
+        if (!branch.hidden) matches += 1;
+        return !branch.hidden;
+      };
+      [...tree.children].filter((node) => node.classList.contains("prompt-tree-node")).forEach((branch) => visit(branch));
+      noMatches.hidden = matches > 0;
+      collapse.disabled = Boolean(query);
+    };
+    search.addEventListener("input", filterTree);
+    const note = element("p", "token-estimate-note", "Token counts are estimates. Parent sections include their subsections.");
+    if (!tree.children.length) noMatches.textContent = "Add Markdown headings or XML tags to see your outline.";
+    tree.append(noMatches);
+    filterTree();
+    container.append(summary, distribution, outlineHeader, searchWrap, columns, tree, note);
     return { node: container, diagnostics, sections, total, prompt };
   }
 
@@ -337,7 +442,8 @@ export function mountContextView(root = document, options = {}) {
 
     viewer.replaceChildren(output);
     updateDiagnostics(diagnostics);
-    fitEditor();
+    updateSourceView();
+    saveDrafts();
   }
 
   function setMode(mode) {
@@ -345,11 +451,15 @@ export function mountContextView(root = document, options = {}) {
     documentElement?.setAttribute("data-viewer-mode", mode);
     state.mode = mode;
     state.selectedTraceId = null;
+    state.selectedPromptLine = null;
+    state.selectedPromptEnd = null;
     sourceTitle.textContent = MODES[mode].sourceTitle;
     modeHint.textContent = MODES[mode].hint;
     viewerTitle.textContent = MODES[mode].viewerTitle;
     semanticControls.hidden = mode !== "trace";
     sourceInput.value = state.drafts[mode];
+    reader.scrollTop = 0;
+    sourceInput.scrollTop = 0;
     root.querySelectorAll("[data-trace-filter]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.traceFilter === state.traceFilter)));
     render();
   }
@@ -430,6 +540,8 @@ export function mountContextView(root = document, options = {}) {
     state.drafts[state.mode] = SAMPLES[state.mode];
     sourceInput.value = state.drafts[state.mode];
     state.selectedTraceId = null;
+    resetPromptNavigation();
+    state.filenames[state.mode] = `Example ${state.mode}`;
     render();
   }
 
@@ -438,7 +550,21 @@ export function mountContextView(root = document, options = {}) {
     sourceInput.value = "";
     state.selectedTraceId = null;
     state.latest = null;
+    resetPromptNavigation();
+    state.filenames[state.mode] = `Untitled ${state.mode}`;
+    state.sourceView = "edit";
     render();
+    sourceInput.focus({ preventScroll: true });
+  }
+
+  function resetPromptNavigation() {
+    state.promptOpenNodes.clear();
+    state.promptDisclosureInitialized = false;
+    state.selectedPromptLine = null;
+    state.selectedPromptEnd = null;
+    state.outlineQuery = "";
+    reader.scrollTop = 0;
+    sourceInput.scrollTop = 0;
   }
 
   const actions = {
@@ -447,14 +573,42 @@ export function mountContextView(root = document, options = {}) {
     export: showExport,
     sample: loadSample,
     clear: clearSource,
+    import: () => sourceFile.click(),
   };
 
   listen(sourceInput, "input", () => {
     state.drafts[state.mode] = sourceInput.value;
     state.selectedTraceId = null;
+    state.selectedPromptLine = null;
+    state.selectedPromptEnd = null;
+    if (state.filenames[state.mode].startsWith("Example")) state.filenames[state.mode] = `Untitled ${state.mode}`;
     render();
   });
-  listen(window, "resize", fitEditor);
+  listen(sourceFile, "change", async () => {
+    const file = sourceFile.files?.[0];
+    if (!file) return;
+    const sequence = ++importSequence;
+    const mode = state.mode;
+    try {
+      const text = await file.text();
+      if (lifecycle.signal.aborted || sequence !== importSequence) return;
+      state.drafts[mode] = text;
+      state.filenames[mode] = file.name;
+      if (state.mode === mode) {
+        sourceInput.value = text;
+        state.sourceView = "read";
+        resetPromptNavigation();
+        render();
+      } else saveDrafts();
+    } catch {
+      openDialog("Open file", "Could not read this file", emptyState("Try another text file", "You can also paste the source directly into Edit."));
+    } finally { sourceFile.value = ""; }
+  });
+  root.querySelectorAll("[data-source-view]").forEach((button) => listen(button, "click", () => {
+    state.sourceView = button.dataset.sourceView;
+    updateSourceView();
+    if (state.selectedPromptLine) focusSourceRange(currentSource(), state.selectedPromptLine, state.selectedPromptEnd);
+  }));
   root.querySelectorAll("[data-trace-filter]").forEach((button) => listen(button, "click", () => {
     if (state.mode !== "trace") return;
     state.traceFilter = button.dataset.traceFilter;
