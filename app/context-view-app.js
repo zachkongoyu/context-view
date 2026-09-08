@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ThemeProvider } from "next-themes";
 import { Button } from "@/components/motion/button/base";
 import { MorphingModal } from "@/components/motion/morphing-modal";
@@ -52,6 +53,10 @@ function ContextViewSurface() {
       if (disposed) return;
       controller = mountContextView(document, { openModal, closeModal });
       controllerRef.current = controller;
+      if (new URLSearchParams(window.location.search).get("view") === "trace") {
+        setMode("trace");
+        controller.setMode("trace");
+      }
     });
 
     return () => {
@@ -78,6 +83,9 @@ function ContextViewSurface() {
   const changeMode = useCallback((nextMode) => {
     setMode(nextMode);
     controllerRef.current?.setMode(nextMode);
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", nextMode);
+    window.history.replaceState(window.history.state, "", url);
   }, []);
 
   return (
@@ -88,6 +96,7 @@ function ContextViewSurface() {
           <span className="brand-copy"><strong>Context View</strong></span>
         </a>
         <nav className="header-mode-nav" aria-label="Viewer mode">
+          <Link href="/learn" className="inspector-learn-link"><BookOpen size={15} />Learn</Link>
           <Tabs value={mode} onValueChange={changeMode} variant="pill">
             <TabsList className="mode-tabs-list grid grid-cols-2 bg-transparent p-0">
               {MODES.map(([value, label]) => (

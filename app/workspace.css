@@ -8,6 +8,9 @@
 .local-status > span, .analysis-live > span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .beui-theme-toggle { width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); cursor: pointer; }
 .mode-tabs-list { display: flex !important; gap: 4px; padding: 3px !important; background: var(--surface-2) !important; border-radius: 9px; }
+.header-mode-nav { display: flex; align-items: center; gap: 5px; }
+.inspector-learn-link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; color: var(--muted); font-size: 12px; text-decoration: none; border-radius: 6px; }
+.inspector-learn-link:hover { color: var(--accent-strong); background: var(--accent-soft); }
 .mode-tab-trigger { display: flex; align-items: center; gap: 7px; min-height: 30px; padding: 5px 15px; font-size: 12px; font-weight: 550; border-radius: 6px; }
 .mode-tab-trigger[aria-selected="true"] { color: var(--text) !important; }
 .mode-tab-indicator { border-radius: 6px !important; background: var(--surface); box-shadow: 0 1px 3px #0000000d; }
@@ -177,7 +180,8 @@ html[data-viewer-mode="trace"] .analysis-live { display: none; }
   .app-footer { padding-bottom: 16px; }
 }
 @media (max-width: 460px) {
-  .app-header { gap: 12px; }
+  .app-header { gap: 6px 12px; flex-wrap: wrap; flex-basis: 98px; padding-block: 10px 7px; }
+  .app-header .header-mode-nav { order: 3; flex-basis: 100%; }
   .brand-copy strong { font-size: 14px; }
   .brand-mark { width: 27px; height: 27px; }
   .brand { gap: 7px; }
