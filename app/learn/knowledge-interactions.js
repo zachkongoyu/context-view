@@ -2,36 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Braces, Check, Copy, CornerDownLeft, Cpu, FileCheck2, Layers2, Search, X } from "lucide-react";
-import { CATEGORIES, LOOP_STAGES, SOURCES, TERMS, searchTerms } from "../../lib/agent-knowledge";
-
-export function LoopExplorer() {
-  const [selected, setSelected] = useState("model");
-  const stage = LOOP_STAGES.find((item) => item.id === selected);
-  const stageIndex = LOOP_STAGES.indexOf(stage);
-  const icons = [Layers2, Cpu, Braces, FileCheck2];
-  return <div className="loop-explorer">
-    <div className="loop-canvas">
-      <div className="loop-start"><span className="learn-status-dot" />A request arrives</div>
-      <div className="loop-flow" aria-label="Explore the agent loop">
-        {LOOP_STAGES.slice(0, 4).map((item, index) => { const Icon = icons[index]; return <div className="loop-node-wrap" key={item.id}>
-          <button className="loop-node" type="button" aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
-            <span className="loop-node-top"><Icon size={20} /><span className="loop-node-number">0{index + 1}</span></span><strong>{item.name}</strong><small>{item.actor}</small>
-          </button>
-          {index < 3 && <ArrowRight className="loop-next-arrow" size={17} aria-hidden="true" />}
-        </div>; })}
-      </div>
-      <div className="loop-return"><CornerDownLeft size={16} aria-hidden="true" /><span>Results return to context for the next model call</span></div>
-      <div className="loop-exit"><span>From the model, when ready</span><ArrowDown size={15} aria-hidden="true" /><button type="button" aria-pressed={selected === "finish"} onClick={() => setSelected("finish")}><Check size={15} />Return an answer</button></div>
-    </div>
-    <div className="loop-explanation" aria-live="polite" aria-atomic="true">
-      <div key={stage.id} className="loop-stage-copy"><span className="learn-eyebrow">STAGE 0{stageIndex + 1} / {stage.actor}</span><h3>{stage.name}</h3><p>{stage.description}</p><Link className="learn-text-link" href={`/learn/${stage.term}`}>Explore the definition <ArrowUpRight size={14} /></Link></div>
-      <div className="loop-example"><span><i />Order assistant · illustrative example</span><pre>{stage.example}</pre></div>
-    </div>
-    <div className="loop-controls"><span>0{stageIndex + 1} <span>/ 0{LOOP_STAGES.length}</span></span><div><button type="button" aria-label="Previous loop stage" disabled={stageIndex === 0} onClick={() => setSelected(LOOP_STAGES[stageIndex - 1].id)}><ArrowLeft size={15} /></button><button type="button" onClick={() => setSelected(LOOP_STAGES[(stageIndex + 1) % LOOP_STAGES.length].id)}>{stageIndex === LOOP_STAGES.length - 1 ? "Start again" : "Next stage"}<ArrowRight size={15} /></button></div></div>
-    <div className="loop-footnote">Select a stage to explore it. This shows a common tool-using loop; runtimes can also branch, pause, or run work in parallel. <a href={SOURCES.tools.url} target="_blank" rel="noreferrer">Tool-use reference ↗</a></div>
-  </div>;
-}
+import { ArrowUpRight, Check, Copy, Search, X } from "lucide-react";
+import { CATEGORIES, TERMS, searchTerms } from "../../lib/agent-knowledge";
 
 const CHAPTERS = [
   ["agent-loop", "The loop"], ["boundaries", "The layers"], ["vocabulary", "Vocabulary"], ["distinctions", "Distinctions"], ["about", "Sources"],

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, CircleHelp } from "lucide-react";
-import { CATEGORIES, COMPARISONS, SITE_URL, SOURCES, TERMS, getTerm } from "../../lib/agent-knowledge";
-import { Glossary, GuideNavigation, LoopExplorer } from "./knowledge-interactions";
-import { AgentBlueprint, LearningPaths } from "./agent-blueprint";
+import { ArrowUpRight, CircleHelp } from "lucide-react";
+import { COMPARISONS, SITE_URL, SOURCES, TERMS, getTerm } from "../../lib/agent-knowledge";
+import { Glossary, GuideNavigation } from "./knowledge-interactions";
+import { AgentLab } from "./agent-lab";
 
 export const metadata = {
   title: "Agent foundations — Context View",
@@ -14,25 +14,12 @@ export const metadata = {
 export default function LearnPage() {
   return <div className="knowledge-layout guide-layout">
     <main id="learn-main" className="knowledge-main">
-      <section className="learn-hero">
-        <div className="learn-hero-copy">
-        <div className="learn-eyebrow"><span className="learn-status-dot" />The field guide <span className="learn-eyebrow-separator">/</span> Agent foundations</div>
-        <h1>The anatomy<br />of an <span>agent<span className="hero-period">.</span></span></h1>
-        <p>A shared vocabulary for the pieces, boundaries, and loops behind agent systems. Start with what happens, then put a name to each part.</p>
-        <div className="learn-hero-actions"><a className="learn-button" href="#agent-loop">Explore the loop <ArrowRight size={16} /></a><a className="learn-text-link" href="#vocabulary">Browse {TERMS.length} concepts <ArrowDownIcon /></a></div>
-        <div className="learn-hero-meta"><span>{TERMS.length} concepts</span><span>{CATEGORIES.length} connected layers</span><span>Built on primary sources</span></div>
-        </div>
-        <AgentBlueprint />
+      <section className="lab-intro">
+        <div><span className="learn-eyebrow"><span className="learn-status-dot" />A FIELD GUIDE YOU CAN PLAY WITH</span><h1>Agents,{" "}<br /><em>made tangible.</em></h1></div>
+        <div className="lab-intro-copy"><p>Messages. Memory. Models. Tools.<br />See how the pieces work together.<br />Then take the loop apart.</p><a href="#vocabulary">Explore {TERMS.length} concepts <ArrowDownIcon /></a></div>
       </section>
-
-      <LearningPaths count={TERMS.length} />
+      <section id="agent-loop" className="lab-section" aria-label="Interactive agent lab"><AgentLab /></section>
       <GuideNavigation />
-
-      <section id="agent-loop" className="learn-section">
-        <div className="learn-section-heading"><div><span className="learn-eyebrow">01 / Follow the work</span><h2>The loop at the center.</h2></div><span className="learn-interactive-badge">Interactive</span></div>
-        <p className="learn-section-intro">An agent connects a model's decisions to actions and feedback. Explore a simple order-status request, one stage at a time.</p>
-        <LoopExplorer />
-      </section>
 
       <section id="boundaries" className="learn-section">
         <div className="learn-section-heading"><div><span className="learn-eyebrow">02 / Keep the boundaries clear</span><h2>One request. Several layers.</h2></div></div>
