@@ -1,5 +1,19 @@
 # Context View: inspection workspace
 
+## Shared identity and learning experience
+
+The September 2026 visual refresh uses midnight blue-black surfaces, an electric lime signal color, and a neutral light theme. New visitors start in dark mode; an existing theme preference is preserved. The brand, actions, borders, and selected states use the same tokens across Learn, Prompt, and Trace.
+
+The UI-library roundup supplied by the user led to these primary design references:
+
+- [Magic UI's Bento Grid](https://magicui.design/docs/components/bento-grid): compact visual entry points for different ways into the content.
+- [Magic UI's Animated Beam](https://magicui.design/docs/components/animated-beam): visible connections between parts of a system.
+- [Aceternity's Spotlight](https://ui.aceternity.com/components/spotlight): localized lighting to establish a focal point.
+
+The implementation uses original CSS and SVG, with the project's existing icons and theme controls. No additional component library or rendering dependency is required. The system map links to actual concept pages; its connections show related concepts, not a mandatory runtime architecture. The separate loop explorer explains execution order and now offers previous/next stage controls. Decorative motion finishes within four seconds and respects reduced-motion preferences.
+
+The guide home uses a broad editorial hero, three illustrated entry cards, and a sticky chapter bar. Articles retain a quiet reading column and concept navigation. The glossary has larger cards, visible category filters, and a focused search field. Narrow screens stack the system map, entry cards, and loop stages; the chapter bar can scroll horizontally without widening the page.
+
 The primary workflow is reading a real prompt and navigating its structure. The supplied GD sales prompt exposed two problems: the source textarea grew beyond 5,000 pixels, and selecting a late section scrolled the analysis out of view. Long outline labels were also truncated.
 
 ## Reference patterns

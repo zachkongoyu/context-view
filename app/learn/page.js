@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BookOpen, Braces, CircleHelp } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CircleHelp } from "lucide-react";
 import { CATEGORIES, COMPARISONS, SITE_URL, SOURCES, TERMS, getTerm } from "../../lib/agent-knowledge";
-import { Glossary, LoopExplorer } from "./knowledge-interactions";
+import { Glossary, GuideNavigation, LoopExplorer } from "./knowledge-interactions";
+import { AgentBlueprint, LearningPaths } from "./agent-blueprint";
 
 export const metadata = {
   title: "Agent foundations — Context View",
@@ -11,23 +12,21 @@ export const metadata = {
 };
 
 export default function LearnPage() {
-  return <div className="knowledge-layout">
-    <aside className="learn-sidebar" aria-label="Guide navigation">
-      <div className="learn-sidebar-title"><BookOpen size={15} />Agent foundations</div>
-      <nav><a href="#learn-main">Overview</a><a href="#agent-loop">The agent loop</a><a href="#boundaries">One request, several layers</a><a href="#vocabulary">The vocabulary <span>{TERMS.length}</span></a><a href="#distinctions">Common distinctions</a><a href="#about">Sources & approach</a></nav>
-      <div className="learn-sidebar-rule" />
-      <span className="learn-sidebar-label">Start with a question</span>
-      <Link href="/learn/message">What is a message?</Link><Link href="/learn/turn">Where does a turn end?</Link><Link href="/learn/session">What does a session keep?</Link>
-      <div className="sidebar-practice"><Braces size={18} /><strong>See the records</strong><p>Explore real event data in the Trace inspector.</p><Link href="/?view=trace">Open Trace <ArrowUpRight size={13} /></Link></div>
-    </aside>
+  return <div className="knowledge-layout guide-layout">
     <main id="learn-main" className="knowledge-main">
       <section className="learn-hero">
+        <div className="learn-hero-copy">
         <div className="learn-eyebrow"><span className="learn-status-dot" />The field guide <span className="learn-eyebrow-separator">/</span> Agent foundations</div>
-        <h1>The anatomy<br />of an <span>agent.</span></h1>
+        <h1>The anatomy<br />of an <span>agent<span className="hero-period">.</span></span></h1>
         <p>A shared vocabulary for the pieces, boundaries, and loops behind agent systems. Start with what happens, then put a name to each part.</p>
         <div className="learn-hero-actions"><a className="learn-button" href="#agent-loop">Explore the loop <ArrowRight size={16} /></a><a className="learn-text-link" href="#vocabulary">Browse {TERMS.length} concepts <ArrowDownIcon /></a></div>
-        <div className="learn-hero-meta"><span>{CATEGORIES.length} connected layers</span><span>Examples you can follow</span><span>Primary sources throughout</span></div>
+        <div className="learn-hero-meta"><span>{TERMS.length} concepts</span><span>{CATEGORIES.length} connected layers</span><span>Built on primary sources</span></div>
+        </div>
+        <AgentBlueprint />
       </section>
+
+      <LearningPaths count={TERMS.length} />
+      <GuideNavigation />
 
       <section id="agent-loop" className="learn-section">
         <div className="learn-section-heading"><div><span className="learn-eyebrow">01 / Follow the work</span><h2>The loop at the center.</h2></div><span className="learn-interactive-badge">Interactive</span></div>

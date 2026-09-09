@@ -6,7 +6,7 @@ import { BookOpen, Braces, FileText, Layers2 } from "lucide-react";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
 
 export function KnowledgeFrame({ children }) {
-  return <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false} storageKey="context-view-theme">
+  return <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false} storageKey="context-view-theme">
     <div className="knowledge-shell">
       <a className="learn-skip" href="#learn-main">Skip to content</a>
       <header className="knowledge-header">
@@ -16,7 +16,7 @@ export function KnowledgeFrame({ children }) {
           <Link href="/?view=prompt"><FileText size={15} />Prompt</Link>
           <Link href="/?view=trace"><Braces size={15} />Trace</Link>
         </nav>
-        <div className="knowledge-header-end"><span>Agent field guide</span><ThemeToggle className="beui-theme-toggle" iconClassName="size-4" /></div>
+        <div className="knowledge-header-end"><span><i />A field guide for builders</span><ThemeToggle variant="circle" start="top-right" className="beui-theme-toggle" iconClassName="size-4" /></div>
       </header>
       {children}
       <footer className="knowledge-footer"><span>Context View <span aria-hidden="true">/</span> A field guide to agent systems</span><Link href="/learn#about">About this vocabulary <span aria-hidden="true">↗</span></Link></footer>

@@ -16,7 +16,7 @@ const MODES = [
 
 export function ContextViewApp() {
   return (
-    <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false} storageKey="context-view-theme">
+    <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false} storageKey="context-view-theme">
       <ContextViewSurface />
     </ThemeProvider>
   );
