@@ -58,22 +58,86 @@ Review the parser for error-handling problems.
 
 Return concise findings ordered by severity.`,
   trace: JSON.stringify({
-    model: "example-model",
-    messages: [
-      { role: "system", content: "# Order assistant\n\nUse the provided tools to check orders.\n\n<rules>\n<rule>Use recorded evidence.</rule>\n<rule>Explain when a lookup fails.</rule>\n</rules>" },
-      { role: "user", content: "Has order A104 shipped?" },
-    ],
-    thinking: { type: "enabled" },
-    max_tokens: 4096,
-    tools: [
-      { type: "function", function: { name: "lookup_order", description: "Look up an order's current status and estimated delivery date.", parameters: { type: "object", properties: { order_id: { type: "string", description: "Order identifier, such as A104." } }, required: ["order_id"], additionalProperties: false } } },
-      { type: "function", function: { name: "search_help", description: "Search the help center for delivery and returns information.", parameters: { type: "object", properties: { query: { type: "string", description: "Search terms." }, limit: { type: "integer", minimum: 1, maximum: 10 } }, required: ["query"] } } },
-    ],
-    tool_choice: "auto",
-    reasoning_effort: "medium",
-    stream: true,
-    stream_options: { include_usage: true },
-  }, null, 2),
+  "title": "Illustrative order lookup",
+  "attempts": [
+    {
+      "id": "example-order-lookup",
+      "caseTitle": "Order lookup (synthetic example)",
+      "version": 1,
+      "trial": 1,
+      "record": {
+        "status": "completed",
+        "model": {
+          "provider": "Example provider",
+          "model": "example-model"
+        },
+        "elapsedMs": 4200,
+        "inputTokens": 1800,
+        "outputTokens": 120,
+        "events": [
+          {
+            "type": "provider_timing",
+            "phase": "gate_wait",
+            "round": 1,
+            "startedAt": 1788969499000,
+            "ms": 200,
+            "outcome": "ok"
+          },
+          {
+            "type": "provider_timing",
+            "phase": "provider_attempt",
+            "round": 1,
+            "requestId": "1",
+            "startedAt": 1788969499200,
+            "ms": 1400,
+            "outcome": "ok"
+          },
+          {
+            "type": "completion",
+            "round": 1,
+            "requestId": "1",
+            "reasoning": "Look up the order before answering.",
+            "finishReason": "tool_calls"
+          },
+          {
+            "type": "tool",
+            "id": "r1c0",
+            "tool": "lookup_order",
+            "args": "{\"order_id\":\"A104\"}"
+          },
+          {
+            "type": "tool_result",
+            "id": "r1c0",
+            "tool": "lookup_order",
+            "ok": true,
+            "preview": "{\"status\":\"shipped\"}"
+          },
+          {
+            "type": "provider_timing",
+            "phase": "provider_attempt",
+            "round": 2,
+            "requestId": "2",
+            "startedAt": 1788969501200,
+            "ms": 2000,
+            "outcome": "ok"
+          },
+          {
+            "type": "completion",
+            "round": 2,
+            "requestId": "2",
+            "reasoning": "The order status confirms shipment.",
+            "finishReason": "stop"
+          },
+          {
+            "type": "say",
+            "round": 2,
+            "text": "Order A104 has shipped."
+          }
+        ]
+      }
+    }
+  ]
+}, null, 2),
 };
 
 export function mountContextView(root = document, options = {}) {
