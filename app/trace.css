@@ -137,3 +137,35 @@ html[data-viewer-mode="trace"] .source-pane { position: absolute; z-index: 20; i
   .trace-detail-body { min-height: 150px; }
   .trace-insight { flex-wrap: wrap; }
 }
+/* Keep the execution timeline primary; details are opened on demand. */
+html[data-viewer-mode="trace"] .app-shell { max-width: none; padding-inline: 16px; }
+.attempt-trace-bundle { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; width:100%; }
+.attempt-trace-bundle > div:last-child { display:flex; flex:1; min-height:0; min-width:0; }
+.attempt-trace-bundle > .trace-timing-note { margin:0; padding:6px 18px 10px; font-size:12px; line-height:1.5; }
+.trace-inspector { --role-assistant:#3b82f6; --role-tool:#14b8a6; --role-context:#a78bfa; --role-user:#a78bfa; }
+.trace-inspector .trace-workspace { grid-template-columns:minmax(0,1fr); }
+.trace-inspector[data-details="closed"] .trace-detail { display:none; }
+.trace-inspector[data-details="open"] .trace-workspace { grid-template-columns:minmax(0,1fr) minmax(300px,32%); }
+.trace-inspector .trace-axis-row, .trace-inspector .trace-row { grid-template-columns:minmax(180px,28%) minmax(100px,1fr) 72px; }
+.trace-inspector .trace-event-name strong { font-size:14px; line-height:20px; }
+.trace-inspector .trace-event-name small { font-size:12px; }
+.trace-inspector .trace-duration, .trace-inspector .waterfall-axis { font-size:12px; color:var(--muted); }
+.trace-inspector .waterfall-bar { height:16px; opacity:1; border-radius:4px; }
+.trace-inspector .waterfall-track { display:block; background-size:25% 100%; }
+.trace-inspector .waterfall-axis { display:flex; }
+.event-wait { --event-color:#f59e0b; }
+.legend-wait { --legend:#f59e0b; }
+.trace-inspector .trace-legend { font-size:12px; flex-wrap:wrap; }
+.trace-inspector .trace-legend span::before { width:9px; height:9px; }
+.trace-inspector .trace-toolbar { flex-wrap:wrap; }
+.trace-inspector .trace-search { order:0; flex-basis:auto; }
+@media(max-width:760px) {
+ .trace-inspector[data-details="open"] .trace-workspace { display:flex; }
+ .trace-inspector .trace-axis-row, .trace-inspector .trace-row { grid-template-columns:minmax(115px,35%) minmax(60px,1fr) 52px; gap:8px; padding-inline:10px; }
+ .trace-inspector .trace-event-name strong { font-size:12px; }
+ .trace-inspector .trace-event-name small { font-size:11px; }
+ .trace-inspector .trace-explorer { max-height:none; min-height:400px; }
+ .trace-inspector[data-details="closed"] { min-height:550px; }
+ html[data-viewer-mode="trace"] .viewer-pane { min-height:650px; }
+ .attempt-trace-bundle > .trace-timing-note { display:block; }
+}

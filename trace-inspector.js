@@ -59,6 +59,7 @@ export function renderTrace(trace, options = {}) {
   const summary = traceSummary(trace);
   const notify = () => options.onStateChange?.({ ...state });
   const root = element("div", "trace-inspector");
+  root.dataset.details = "closed";
   const overview = element("section", "trace-overview");
   const identity = element("div", "trace-identity");
   const heading = element("div", "trace-run-heading");
@@ -109,12 +110,19 @@ export function renderTrace(trace, options = {}) {
     notify();
   });
   searchWrap.append(searchIcon, search);
-  toolbar.append(views, searchWrap, count);
+  const detailToggle = button("Show details", "quiet-button", () => {
+    const open = root.dataset.details !== "open";
+    root.dataset.details = open ? "open" : "closed";
+    detailToggle.textContent = open ? "Hide details" : "Show details";
+    detailToggle.setAttribute("aria-expanded", String(open));
+  });
+  detailToggle.setAttribute("aria-expanded", "false");
+  toolbar.append(views, searchWrap, count, detailToggle);
   const axis = element("div", "trace-axis-row");
   const rows = element("div", "trace-rows");
   rows.setAttribute("aria-label", "Event list");
   const legend = element("div", "trace-legend");
-  legend.append(element("span", "legend-user", "User"), element("span", "legend-assistant", "Assistant"), element("span", "legend-call", "Tool"), element("span", "legend-error", "Error"));
+  legend.append(element("span", "legend-assistant", "Model / assistant"), element("span", "legend-call", "Tool"), element("span", "legend-wait", "Waiting"), element("span", "legend-error", "Error"), element("span", "", "Dashed marker = inferred timing"));
   explorer.append(toolbar, axis, rows, legend);
   const detail = element("aside", "trace-detail");
   detail.setAttribute("aria-label", "Event details");
@@ -157,6 +165,9 @@ export function renderTrace(trace, options = {}) {
     }
     visible.forEach((step, index) => {
       const row = button("", `trace-row ${isErrorStep(step) ? "has-error" : ""}`, () => {
+        root.dataset.details = "open";
+        detailToggle.textContent = "Hide details";
+        detailToggle.setAttribute("aria-expanded", "true");
         choose(step.id);
         if (window.matchMedia("(max-width: 760px)").matches) detail.scrollIntoView({ block: "start" });
       });
@@ -180,6 +191,7 @@ export function renderTrace(trace, options = {}) {
       const start = summary.hasTiming ? Math.min(100, step.timing.start / scaleDuration * 100) : (step.sequence - 1) / Math.max(1, trace.steps.length) * 100;
       const width = summary.hasTiming ? Math.min(100 - start, step.timing.duration / scaleDuration * 100) : 0;
       const bar = element("span", `waterfall-bar event-${traceEventType(step)}${isErrorStep(step) ? " event-error" : ""}${step.timing.source === "inferred" ? " is-inferred" : ""}`);
+      if (step.raw?.phase === "gate_wait" && !isErrorStep(step)) bar.classList.add("event-wait");
       bar.style.setProperty("--waterfall-start", `${start}%`);
       bar.style.setProperty("--waterfall-width", `${width}%`);
       track.append(bar);

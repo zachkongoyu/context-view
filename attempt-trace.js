@@ -31,6 +31,7 @@ export function normalizeAttempt(attempt) {
 
 export function renderAttemptBundle(bundle, options = {}) {
   const root = document.createElement("div");
+  root.className = "attempt-trace-bundle";
   const toolbar = document.createElement("div");
   toolbar.className = "trace-toolbar";
   const label = document.createElement("label");
