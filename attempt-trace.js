@@ -46,7 +46,8 @@ export function renderAttemptBundle(bundle, options = {}) {
     select.append(option);
   });
   select.value = String(Math.min(options.attemptIndex || 0, attempts.length - 1));
-  label.append(select);
+  if (attempts.length > 1) label.append(select);
+  else label.textContent = attempts[0].caseTitle || attempts[0].id || "Agent run";
   toolbar.append(label);
   const note = document.createElement("p");
   note.className = "trace-timing-note";
