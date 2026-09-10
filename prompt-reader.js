@@ -111,10 +111,29 @@ function appendInline(node, text) {
   node.append(document.createTextNode(text.slice(cursor)));
 }
 
+export function promptDisplaySource(source) {
+  const lineMap = [];
+  let fence = null;
+  const text = source.split(/\r?\n/).map((line, index) => {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/);
+    const literal = fence || marker;
+    if (marker) fence = fence === marker[1] ? null : fence || marker[1];
+    const decoded = literal ? line : line.split(/(`+[^`]*`+)/g).map((part, i) => i % 2 ? part : part.replace(/\\\\|\\r\\n|\\n/g, value => value === "\\\\" ? value : "\n")).join("");
+    for (const unused of decoded.split("\n")) lineMap.push(index + 1);
+    return decoded;
+  }).join("\n");
+  return { text, lineMap };
+}
+
 export function renderPromptReader(source) {
   const article = document.createElement("article");
   article.className = "prompt-document";
-  appendBlocks(article, readingBlocks(source));
+  const display = promptDisplaySource(source);
+  appendBlocks(article, readingBlocks(display.text));
+  article.querySelectorAll("[data-source-line]").forEach(node => {
+    node.dataset.sourceLine = display.lineMap[Number(node.dataset.sourceLine) - 1];
+    node.dataset.sourceEnd = display.lineMap[Number(node.dataset.sourceEnd) - 1];
+  });
   return article;
 }
 
