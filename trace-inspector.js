@@ -250,6 +250,13 @@ export function renderTrace(trace, options = {}) {
       body.append(metadata);
       if (Object.keys(step.metadata || {}).length) body.append(element("pre", "trace-detail-code", pretty(step.metadata)));
     } else {
+      for (const [label, value] of [["Request", step.raw?.request], ["Response", step.raw?.response]]) {
+        if (value !== undefined) {
+          const disclosure = element("details", "trace-content-block");
+          disclosure.append(element("summary", "", label), element("pre", "trace-detail-code", pretty(value)));
+          body.append(disclosure);
+        }
+      }
       if (!step.parts.length) body.append(element("p", "trace-detail-description", "No content was recorded for this event."));
       for (const part of step.parts) {
         const block = element("section", "trace-content-block");

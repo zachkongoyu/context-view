@@ -5,6 +5,7 @@ import { estimateTokens, formatCompactNumber } from "./token-estimator.js";
 import { normalizeRequest, renderRequest } from "./request-viewer.js";
 import { normalizeTrace, renderTrace } from "./trace-viewer.js";
 import { isAttemptBundle, renderAttemptBundle } from "./attempt-trace.js";
+import { isRoundsTrace, normalizeRoundsTrace } from "./rounds-trace.js";
 import { renderPromptReader, sourceRange } from "./prompt-reader.js";
 
 const MODES = {
@@ -58,85 +59,94 @@ Review the parser for error-handling problems.
 
 Return concise findings ordered by severity.`,
   trace: JSON.stringify({
-  "title": "Illustrative order lookup",
-  "attempts": [
+  "version": 1,
+  "input": "Has order A104 shipped?",
+  "answer": "Order A104 has shipped.",
+  "stopReason": "completed",
+  "startedAt": 1788969499000,
+  "elapsedMs": 4200,
+  "rounds": [
     {
-      "id": "example-order-lookup",
-      "caseTitle": "Order lookup (synthetic example)",
-      "version": 1,
-      "trial": 1,
-      "record": {
-        "status": "completed",
-        "model": {
-          "provider": "Example provider",
-          "model": "example-model"
-        },
-        "elapsedMs": 4200,
-        "inputTokens": 1800,
-        "outputTokens": 120,
-        "events": [
+      "round": 1,
+      "request": {
+        "messages": [
           {
-            "type": "provider_timing",
-            "phase": "gate_wait",
-            "round": 1,
-            "startedAt": 1788969499000,
-            "ms": 200,
-            "outcome": "ok"
-          },
-          {
-            "type": "provider_timing",
-            "phase": "provider_attempt",
-            "round": 1,
-            "requestId": "1",
-            "startedAt": 1788969499200,
-            "ms": 1400,
-            "outcome": "ok"
-          },
-          {
-            "type": "completion",
-            "round": 1,
-            "requestId": "1",
-            "reasoning": "Look up the order before answering.",
-            "finishReason": "tool_calls"
-          },
-          {
-            "type": "tool",
-            "id": "r1c0",
-            "tool": "lookup_order",
-            "args": "{\"order_id\":\"A104\"}"
-          },
-          {
-            "type": "tool_result",
-            "id": "r1c0",
-            "tool": "lookup_order",
-            "ok": true,
-            "preview": "{\"status\":\"shipped\"}"
-          },
-          {
-            "type": "provider_timing",
-            "phase": "provider_attempt",
-            "round": 2,
-            "requestId": "2",
-            "startedAt": 1788969501200,
-            "ms": 2000,
-            "outcome": "ok"
-          },
-          {
-            "type": "completion",
-            "round": 2,
-            "requestId": "2",
-            "reasoning": "The order status confirms shipment.",
-            "finishReason": "stop"
-          },
-          {
-            "type": "say",
-            "round": 2,
-            "text": "Order A104 has shipped."
+            "role": "user",
+            "content": "Has order A104 shipped?"
           }
-        ]
-      }
+        ],
+        "options": {
+          "model": "example-model",
+          "provider": "Example provider"
+        }
+      },
+      "response": {
+        "content": "",
+        "model": "example-model",
+        "provider": "Example provider",
+        "toolCalls": [
+          {
+            "id": "call-1",
+            "name": "lookup_order",
+            "arguments": "{\"order_id\":\"A104\"}"
+          }
+        ],
+        "usage": {
+          "inputTokens": 900,
+          "outputTokens": 60
+        }
+      },
+      "steps": [
+        {
+          "type": "model",
+          "startMs": 0,
+          "durationMs": 1400,
+          "outcome": "ok"
+        },
+        {
+          "type": "tool",
+          "callId": "call-1",
+          "callIndex": 0,
+          "outcome": "succeeded",
+          "observation": "{\"status\":\"shipped\"}"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Has order A104 shipped?"
+          }
+        ],
+        "options": {
+          "model": "example-model",
+          "provider": "Example provider"
+        }
+      },
+      "response": {
+        "content": "Order A104 has shipped.",
+        "model": "example-model",
+        "provider": "Example provider",
+        "toolCalls": [],
+        "usage": {
+          "inputTokens": 900,
+          "outputTokens": 60
+        }
+      },
+      "steps": [
+        {
+          "type": "model",
+          "startMs": 2200,
+          "durationMs": 2000,
+          "outcome": "ok"
+        }
+      ]
     }
-  ]
+  ],
+  "steps": []
 }, null, 2),
 };
 
@@ -499,8 +509,9 @@ export function mountContextView(root = document, options = {}) {
         state.latest = null;
       } else {
         const bundle = isAttemptBundle(parsed.value);
-        const request = bundle ? null : normalizeRequest(parsed.value);
-        const result = request || normalizeTrace(parsed.value);
+        const rounds = isRoundsTrace(parsed.value);
+        const request = bundle || rounds ? null : normalizeRequest(parsed.value);
+        const result = request || (rounds ? normalizeRoundsTrace(parsed.value) : normalizeTrace(parsed.value));
         semanticControls.hidden = Boolean(request);
         viewerTitle.textContent = request ? "Model request" : "Execution trace";
         if (bundle) output = renderAttemptBundle(parsed.value, { ...state.traceUi, filter: state.traceFilter, onStateChange: (next) => { state.traceUi = next; } });
