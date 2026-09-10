@@ -155,6 +155,23 @@ html[data-viewer-mode="trace"] .app-shell { max-width: none; padding-inline: 16p
 .trace-inspector .waterfall-axis { display:flex; }
 .event-wait { --event-color:#f59e0b; }
 .legend-wait { --legend:#f59e0b; }
+.trace-inspector .trace-overview,
+.trace-inspector .trace-detail,
+.trace-inspector .trace-axis-row,
+.trace-inspector .trace-legend { background:transparent; }
+html[data-viewer-mode="trace"] .viewer-pane { border:0; border-radius:0; box-shadow:none; background:transparent; }
+html[data-viewer-mode="trace"] .viewer-header { padding-inline:18px; border-bottom:0; }
+.trace-inspector .trace-overview { border-bottom:0; padding-top:8px; }
+.trace-inspector .trace-insight { border-top:0; }
+.trace-inspector .trace-metric { border-left:0; }
+.trace-inspector .event-icon { background:transparent; border-radius:0; }
+.trace-inspector .trace-view-switch { background:transparent; border:0; box-shadow:none; padding:0; gap:16px; }
+.trace-inspector .trace-view-switch button { border:0; border-radius:0; box-shadow:none; background:transparent; padding-inline:0; }
+.trace-inspector .trace-view-switch button[aria-pressed="true"] { border-bottom:2px solid var(--text); }
+.trace-inspector .trace-search { background:transparent; border:0; border-bottom:1px solid var(--line); border-radius:0; box-shadow:none; }
+.trace-inspector .trace-detail-code { border:0; border-radius:0; padding:0; background:transparent; }
+.trace-inspector .trace-row { border-bottom-color:color-mix(in srgb,var(--line) 45%,transparent); }
+.trace-inspector .trace-detail-footer { background:transparent; }
 .trace-inspector .trace-legend { font-size:12px; flex-wrap:wrap; }
 .trace-inspector .trace-legend span::before { width:9px; height:9px; }
 .trace-inspector .trace-toolbar { flex-wrap:wrap; }
