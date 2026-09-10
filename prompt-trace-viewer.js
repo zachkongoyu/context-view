@@ -2,6 +2,7 @@ import { parseJson } from "./conversation-model.js";
 import { diagnosticCounts, redactSource, runDiagnostics } from "./diagnostics.js";
 import { annotateTokens, parsePrompt } from "./prompt-parser.js";
 import { estimateTokens, formatCompactNumber } from "./token-estimator.js";
+import { normalizeRequest, renderRequest } from "./request-viewer.js";
 import { normalizeTrace, renderTrace } from "./trace-viewer.js";
 import { renderPromptReader, sourceRange } from "./prompt-reader.js";
 
@@ -14,9 +15,9 @@ const MODES = {
   },
   trace: {
     sourceTitle: "Trace",
-    viewerTitle: "Execution trace",
-    summary: "Trace waterfall",
-    hint: "Select an event to inspect its content and timing.",
+    viewerTitle: "Request & execution",
+    summary: "Request & execution",
+    hint: "Inspect messages, available tools, settings, or recorded execution.",
   },
 };
 
@@ -56,19 +57,21 @@ Review the parser for error-handling problems.
 
 Return concise findings ordered by severity.`,
   trace: JSON.stringify({
-    provider: "example",
     model: "example-model",
-    run_id: "run_local_42",
-    duration_ms: 846,
-    usage: { input_tokens: 184, output_tokens: 61, total_tokens: 245 },
-    status: "completed",
-    events: [
-      { type: "message", role: "user", content: "Check the deployment status.", start_ms: 0, duration_ms: 8 },
-      { type: "reasoning", role: "assistant", content: "I should query the current service state.", start_ms: 8, duration_ms: 112 },
-      { type: "function_call", call_id: "call_status_8", name: "get_status", arguments: "{\"service\":\"web\"}", start_ms: 120, duration_ms: 24 },
-      { type: "function_call_output", call_id: "call_status_8", output: { status: "healthy", replicas: 2 }, start_ms: 144, duration_ms: 522 },
-      { type: "message", role: "assistant", content: "The web service is healthy with two replicas.", start_ms: 666, duration_ms: 180 },
+    messages: [
+      { role: "system", content: "# Order assistant\n\nUse the provided tools to check orders.\n\n<rules>\n<rule>Use recorded evidence.</rule>\n<rule>Explain when a lookup fails.</rule>\n</rules>" },
+      { role: "user", content: "Has order A104 shipped?" },
     ],
+    thinking: { type: "enabled" },
+    max_tokens: 4096,
+    tools: [
+      { type: "function", function: { name: "lookup_order", description: "Look up an order's current status and estimated delivery date.", parameters: { type: "object", properties: { order_id: { type: "string", description: "Order identifier, such as A104." } }, required: ["order_id"], additionalProperties: false } } },
+      { type: "function", function: { name: "search_help", description: "Search the help center for delivery and returns information.", parameters: { type: "object", properties: { query: { type: "string", description: "Search terms." }, limit: { type: "integer", minimum: 1, maximum: 10 } }, required: ["query"] } } },
+    ],
+    tool_choice: "auto",
+    reasoning_effort: "medium",
+    stream: true,
+    stream_options: { include_usage: true },
   }, null, 2),
 };
 
@@ -415,13 +418,14 @@ export function mountContextView(root = document, options = {}) {
     let output;
     let diagnostics = [];
 
+    semanticControls.hidden = true;
     if (state.mode === "prompt") {
       const result = renderTokenMap(source);
       output = result.node;
       diagnostics = result.diagnostics;
       state.latest = result;
     } else if (!source.trim()) {
-      output = emptyState("Paste a trace", "Execution timing and linked tool events will appear here.");
+      output = emptyState("Open a request or trace", "Paste request JSON with messages and tools, or import recorded execution events.");
       state.latest = null;
     } else {
       const parsed = parseJson(source);
@@ -429,7 +433,12 @@ export function mountContextView(root = document, options = {}) {
         output = emptyState("Invalid trace JSON", parsed.error);
         state.latest = null;
       } else {
-        const result = normalizeTrace(parsed.value);
+        const request = normalizeRequest(parsed.value);
+        const result = request || normalizeTrace(parsed.value);
+        semanticControls.hidden = Boolean(request);
+        viewerTitle.textContent = request ? "Model request" : "Execution trace";
+        if (request) output = renderRequest(request, { ...state.traceUi, onStateChange: (next) => { state.traceUi = next; } });
+        else
         output = result.steps.length ? renderTrace(result, {
           ...state.traceUi,
           filter: state.traceFilter,

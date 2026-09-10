@@ -2,13 +2,11 @@
 
 ## Shared identity and learning experience
 
-The September 2026 learning experience is an interactive agent lab. Warm ink surfaces, peach actions, lavender context and memory, and cyan tools connect the learning canvas with Prompt and Trace. New visitors start in dark mode; existing theme preferences are preserved. Light mode uses warm paper surfaces with the same dark execution canvas.
+The September 2026 theme follows the official [shadcn/ui dashboard](https://ui.shadcn.com/examples/dashboard): neutral surfaces, subtle borders, sans-serif typography, compact controls, and restrained selected states. The same light and dark tokens apply across Learn, Prompt, and Trace. Existing theme preferences are preserved.
 
-The opening example can be played, paused, rewound, or stepped through. Records appear beside the active component. A successful order lookup and a tool timeout show how results become context for the next model call. A follow-up demonstrates a second turn using retained history. Clicking a component, record, turn boundary, or session reveals its definition in place.
+Learn retains the playable agent scenario and inline definitions with a simple component diagram. The decorative globe, warm palette, and serif display headings have been replaced. Original SVG and CSS illustrate the connections; Motion handles record entry transitions. Playback is scripted and does not represent measured execution time.
 
-The illustration uses original SVG and CSS, with Motion for record entry transitions. Animation runs only during user-initiated playback and respects reduced-motion preferences. Scenarios are deterministic teaching examples with no model or external tool calls. Playback positions do not represent measured execution durations.
-
-The guide keeps its searchable 30-concept vocabulary and sourced articles. Narrow screens stack the canvas and records. Distinct shapes supplement semantic colors. The research and the reasons for these choices are recorded in [UI and UX references](ui-ux-research-2026.md).
+Trace recognizes model request JSON with a messages array. Its Overview, Messages, Tools, Settings, and Raw views preserve the submitted structure. Long system instructions expand on demand; Markdown and XML use the prompt reader. Tool definitions have search, selection, required parameter indicators, and a full schema disclosure. Available capabilities are not counted as executed calls, and configured token limits are not reported as usage. Payloads containing recorded events retain the execution inspector.
 
 The primary workflow is reading a real prompt and navigating its structure. The supplied GD sales prompt exposed two problems: the source textarea grew beyond 5,000 pixels, and selecting a late section scrolled the analysis out of view. Long outline labels were also truncated.
 

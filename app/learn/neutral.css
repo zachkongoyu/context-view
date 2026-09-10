@@ -1,0 +1,41 @@
+/* Neutral component styling, based on the official shadcn/ui dashboard. */
+.knowledge-shell { max-width:1380px; }
+.knowledge-header { height:68px; }
+.lab-intro { padding:32px 0; align-items:center; }
+.lab-intro h1, .lab-intro h1 em, .concept-heading h1 { font-family:var(--font-geist-sans),ui-sans-serif,system-ui,sans-serif; font-style:normal; font-weight:600; color:var(--text); letter-spacing:-1.4px; font-size:42px; line-height:1.15; }
+.lab-intro h1 br { display:none; }
+.lab-intro-copy p { font-size:13px; }
+.lab-intro .learn-eyebrow { color:var(--muted); }
+.lab-play { box-shadow:none; border:1px solid var(--line-strong); border-radius:6px; }
+.lab-play:hover { box-shadow:none; transform:none; }
+.lab-canvas { background:var(--source-surface); color:var(--text); }
+.lab-canvas::before,.lab-canvas::after,.lab-watermark { display:none; }
+.lab-canvas-heading,.lab-canvas-footer,.lab-return-label { color:var(--muted); }
+.lab-canvas-heading > span:first-child { color:var(--text); }
+.lab-canvas-heading i { background:var(--text); }
+.lab-model { width:120px; height:100px; border:1px solid var(--line-strong); border-radius:10px; background:var(--surface); color:var(--text); }
+.lab-model-symbol { display:grid; place-items:center; position:absolute; inset:12px 0 30px; }
+.lab-model-label { top:auto; bottom:10px; color:var(--text); }
+.lab-model.active,.lab-model:hover,.lab-model[aria-pressed=true] { border-color:var(--text); background:var(--surface-2); }
+.lab-node { --node-color:var(--text); border-color:var(--line-strong); background:var(--surface); color:var(--text); border-radius:8px; box-shadow:none; }
+.lab-node-tool,.lab-node-memory,.lab-node-answer { --node-color:var(--text); border-radius:8px; box-shadow:none; }
+.lab-node small { color:var(--muted); }
+.lab-node.active,.lab-node:hover,.lab-node[aria-pressed=true] { border-color:var(--text); background:var(--surface-2); box-shadow:none; }
+.lab-wire { stroke:var(--line-strong); }
+.lab-wire.active,.lab-return-wire.active { stroke:var(--text); }
+.lab-return-wire { stroke:var(--line-strong); }
+.lab-record { --record-color:var(--line-strong); border-left-width:1px; border-radius:6px; }
+.lab-record-meta { color:var(--text); }
+.lab-record-error { --record-color:var(--danger); }
+.lab-record-error .lab-record-meta { color:var(--danger); }
+.lab-record:hover,.lab-record.selected { border-color:var(--text); }
+.lab-records-heading h3 { font-size:16px; }
+.concept-card { border:1px solid var(--line); border-radius:8px; padding:20px; background:var(--surface); }
+.glossary-grid { border:0; gap:12px; }
+.concept-card h4 { font-size:16px; }
+.concept-card:hover { background:var(--surface-2); }
+.comparison-card { border:1px solid var(--line); border-radius:8px; }
+.concept-heading h1 { font-size:48px; }
+.learn-section h2 { font-size:30px; font-weight:600; letter-spacing:-.8px; }
+@media(max-width:780px) { .lab-intro { align-items:flex-start; } .lab-intro h1 { font-size:34px; } .lab-intro h1 br { display:block; } .lab-intro-copy { padding-top:0; } }
+@media(max-width:560px) { .knowledge-header { height:112px; } .lab-intro-copy { padding-top:16px; } .lab-model { width:94px; height:80px; } .lab-model-symbol svg { width:26px; } .concept-heading h1 { font-size:38px; } }

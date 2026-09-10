@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./workspace.css";
 @import "./trace.css";
+@import "./request.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -20,25 +21,25 @@
 
 :root {
   color-scheme: light;
-  --bg: #f8f6f2;
+  --bg: #fafafa;
   --surface: #ffffff;
-  --surface-2: #f1ece6;
-  --surface-3: #e9e0d8;
-  --source-surface: #f5f1ec;
+  --surface-2: #f5f5f5;
+  --surface-3: #e5e5e5;
+  --source-surface: #fafafa;
   --viewer-surface: #ffffff;
-  --shell-surface: #f8f6f2;
-  --text: #292126;
-  --muted: #685e66;
-  --faint: #7b7079;
-  --line: #e4ddd5;
-  --line-strong: #cfc1b5;
-  --accent: #ab563e;
-  --accent-strong: #90432e;
-  --accent-soft: #f8e7dc;
-  --signal: #ffb18c;
-  --signal-ink: #301b19;
-  --control: #ffb18c;
-  --control-text: #301b19;
+  --shell-surface: #fafafa;
+  --text: #171717;
+  --muted: #737373;
+  --faint: #737373;
+  --line: #e5e5e5;
+  --line-strong: #d4d4d4;
+  --accent: #404040;
+  --accent-strong: #171717;
+  --accent-soft: #f0f0f0;
+  --signal: #171717;
+  --signal-ink: #fafafa;
+  --control: #171717;
+  --control-text: #fafafa;
   --danger: #a43b35;
   --warning: #7c5c19;
   --info: #41637a;
@@ -58,33 +59,35 @@
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #131116;
-  --surface: #1b181e;
-  --surface-2: #242028;
-  --surface-3: #342c38;
-  --source-surface: #18151b;
-  --viewer-surface: #1b181e;
-  --shell-surface: #131116;
-  --text: #f4eeea;
-  --muted: #beb1bd;
-  --faint: #9f919f;
-  --line: #342d38;
-  --line-strong: #514352;
-  --accent: #f4a184;
-  --accent-strong: #ffb18c;
-  --accent-soft: #39251f;
-  --control: #ffb18c;
-  --control-text: #301b19;
+  --bg: #0a0a0a;
+  --surface: #171717;
+  --surface-2: #262626;
+  --surface-3: #333333;
+  --source-surface: #141414;
+  --viewer-surface: #171717;
+  --shell-surface: #0a0a0a;
+  --text: #fafafa;
+  --muted: #a3a3a3;
+  --faint: #a3a3a3;
+  --line: #292929;
+  --line-strong: #404040;
+  --accent: #d4d4d4;
+  --accent-strong: #fafafa;
+  --accent-soft: #262626;
+  --control: #fafafa;
+  --control-text: #171717;
   --danger: #dc8d87;
   --warning: #d0ae67;
   --info: #9bb7c9;
-  --code-bg: #18151b;
-  --role-user: #b4a1df;
-  --role-assistant: #edb89f;
-  --role-tool: #8dc4c5;
-  --role-context: #b4a2c8;
+  --code-bg: #141414;
+  --role-user: #a3a3a3;
+  --role-assistant: #e5e5e5;
+  --role-tool: #a3b8ca;
+  --role-context: #a3a3a3;
   --shadow: 0 20px 56px rgb(0 0 0 / 0.38);
   --panel-shadow: none;
+  --signal: #fafafa;
+  --signal-ink: #171717;
 }
 
 * { box-sizing: border-box; }
@@ -171,3 +174,7 @@ pre,
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
+
+/* Neutral, consistent controls shared by all workspaces. */
+.brand-mark { border-color: var(--line-strong); transform: none; border-radius: 6px; box-shadow: none; }
+.primary-action, .mode-tab-indicator { box-shadow: none !important; border-color: var(--line-strong) !important; }

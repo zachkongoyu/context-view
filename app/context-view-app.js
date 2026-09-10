@@ -114,7 +114,7 @@ function ContextViewSurface() {
         <div className="app-main">
           <section className="workbench">
             <div className="workbench-heading">
-              <div><h1>{mode === "prompt" ? "Prompt inspector" : "Trace inspector"}</h1><p className="workspace-description">{mode === "prompt" ? "Explore the structure behind your instructions." : "Explore timing, tool calls, and their results."}</p></div>
+              <div><h1>{mode === "prompt" ? "Prompt inspector" : "Trace inspector"}</h1><p className="workspace-description">{mode === "prompt" ? "Explore the structure behind your instructions." : "Inspect model requests, messages, tools, and execution."}</p></div>
               <div className="action-group">
                 {mode === "trace" ? <Button variant="ghost" size="sm" className="action-button" aria-pressed={traceSourceOpen} onClick={() => setTraceSourceOpen((open) => !open)}><Braces size={15} />{traceSourceOpen ? "Hide source" : "Edit source"}</Button> : null}
                 {mode === "trace" ? <Button variant="ghost" size="sm" className="action-button" onClick={() => controllerRef.current?.runAction("sample")}>Example</Button> : null}
