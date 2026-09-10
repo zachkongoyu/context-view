@@ -4,6 +4,7 @@ import { annotateTokens, parsePrompt } from "./prompt-parser.js";
 import { estimateTokens, formatCompactNumber } from "./token-estimator.js";
 import { normalizeRequest, renderRequest } from "./request-viewer.js";
 import { normalizeTrace, renderTrace } from "./trace-viewer.js";
+import { isAttemptBundle, renderAttemptBundle } from "./attempt-trace.js";
 import { renderPromptReader, sourceRange } from "./prompt-reader.js";
 
 const MODES = {
@@ -433,11 +434,13 @@ export function mountContextView(root = document, options = {}) {
         output = emptyState("Invalid trace JSON", parsed.error);
         state.latest = null;
       } else {
-        const request = normalizeRequest(parsed.value);
+        const bundle = isAttemptBundle(parsed.value);
+        const request = bundle ? null : normalizeRequest(parsed.value);
         const result = request || normalizeTrace(parsed.value);
         semanticControls.hidden = Boolean(request);
         viewerTitle.textContent = request ? "Model request" : "Execution trace";
-        if (request) output = renderRequest(request, { ...state.traceUi, onStateChange: (next) => { state.traceUi = next; } });
+        if (bundle) output = renderAttemptBundle(parsed.value, { ...state.traceUi, filter: state.traceFilter, onStateChange: (next) => { state.traceUi = next; } });
+        else if (request) output = renderRequest(request, { ...state.traceUi, onStateChange: (next) => { state.traceUi = next; } });
         else
         output = result.steps.length ? renderTrace(result, {
           ...state.traceUi,
